@@ -14,20 +14,23 @@
 
             <!-- GRID 2 COLUMNS -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {% for field in public_form %}
-                    <div>
-                        <label for="{{ field.id_for_label }}" class="block mb-1 font-semibold text-gray-700">
-                            {{ field.label }}
-                        </label>
-                        {{ field }}
-                        {% if field.help_text %}
-                            <p class="text-xs text-gray-500 mt-1">{{ field.help_text }}</p>
-                        {% endif %}
-                        {% for error in field.errors %}
-                            <p class="text-xs text-red-600 mt-1">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                {% endfor %}
+                                        {% for field in public_form %}
+                                            <div>
+                                                <label for="{{ field.id_for_label }}" class="block mb-1 font-semibold text-gray-700">
+                                                    {{ field.label }}
+                                                    {% if field.name == 'attach_photographs' or field.name == 'attach_written_statements' %}
+                                                        <span class="text-xs text-gray-500 font-normal">(Optional)</span>
+                                                    {% endif %}
+                                                </label>
+                                                {{ field }}
+                                                {% if field.help_text %}
+                                                    <p class="text-xs text-gray-500 mt-1">{{ field.help_text }}</p>
+                                                {% endif %}
+                                                {% for error in field.errors %}
+                                                    <p class="text-xs text-red-600 mt-1">{{ error }}</p>
+                                                {% endfor %}
+                                            </div>
+                                        {% endfor %}
             </div>
 
             <!-- BUTTONS -->
@@ -41,7 +44,20 @@
                     Submit Report
                 </button>
             </div>
-        </form>
+                                </form>
+                                <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+                                <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        // Apply select2 to all select elements with class 'select2'
+                                        $("select.select2").select2({
+                                            width: '100%',
+                                            theme: 'classic',
+                                            allowClear: true,
+                                            placeholder: 'Select an option',
+                                        });
+                                    });
+                                </script>
     </div>
 </div>
 {% endblock %}
