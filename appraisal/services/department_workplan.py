@@ -50,5 +50,5 @@ class OutPutPerformanceDimensionService:
                 return WeightProgressType(covered_weight=total_output_perf_dimensions_weight, remaining_weight=remaining_weight)
             return WeightProgressType(covered_weight=0, remaining_weight=department_output_obj.weight)
         except Exception as e:
-            raise Exception(f"[OutPutPerformanceDimensionService] get_outputs_weight_progress with department_output_id pk: {department_output_id}, failed with error: {e}")
+            raise Exception(f"[OutPutPerformanceDimensionService] get_outputs_weight_progress with department_output_id pk: {department_output_obj.id}, failed with error: {e}")
     

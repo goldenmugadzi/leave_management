@@ -15,6 +15,7 @@ from ...forms.departmental_plan import DepartmentOutputCreateForm, DesignationFi
 from ...services.department_workplan import DepartmentOutputService
 from ..helper import PayloadDeserializationStrategyContext, DepartmentOutputDeserializationStrategy
 from ...repository.roles import AppraisalRoleRepository
+from ..helper import extended_date_rules
 from it.users.models import Designations
 from django.db import transaction
 from loguru import logger
@@ -118,7 +119,9 @@ class DepartmentOutputCreateView(SuccessMessageMixin, CreateView):
     def get_output_weight_progress(self):
         return get_dept_output_weight_progress(dept_objective_id=self.kwargs.get("departmental_objective_id"), designation_id=self.kwargs.get("designation_id"))
     
-        
+    def date_rules(self):
+        return extended_date_rules()
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
@@ -167,18 +170,37 @@ class DepartmentOutputCreateView(SuccessMessageMixin, CreateView):
             if not self.is_same_creator():
                 messages.error(self.request, "Output creation for this designation within the selected cost center is restricted to a single individual. Please conduct a section-level meeting to designate the responsible person for output creation.")
                 return self.form_invalid(form)
-
+            
             is_output_dimensions_set = False
             with transaction.atomic():
                 repo = DepartmentalOutRepository()
-                dept_output_obj = repo.create(
-                                                creator=self.request.user,
-                                                designation_obj=self.get_designation_obj(),
-                                                departmental_objective_obj=self.get_department_objective_obj(),
-                                                data=payload
-                                            )
                 output_dimensions_repo = OutPutPerformanceDimensionRepository()
-                output_dimensions_created = output_dimensions_repo.create_in_bulk(department_output_obj=dept_output_obj)
+                
+                is_within, prev_year_date = self.date_rules()
+                dept_output_obj = None
+                output_dimensions_created = None
+                
+                if is_within:
+                    dept_output_obj = repo.create(
+                                                    creator=self.request.user,
+                                                    designation_obj=self.get_designation_obj(),
+                                                    departmental_objective_obj=self.get_department_objective_obj(),
+                                                    data=payload,
+                                                    creation_date=prev_year_date
+                                                )
+                    output_dimensions_created = output_dimensions_repo.create_in_bulk(department_output_obj=dept_output_obj, creation_date=prev_year_date)
+                    
+                else:
+                    dept_output_obj = repo.create(
+                                                    creator=self.request.user,
+                                                    designation_obj=self.get_designation_obj(),
+                                                    departmental_objective_obj=self.get_department_objective_obj(),
+                                                    data=payload
+                                                )
+                    output_dimensions_created = output_dimensions_repo.create_in_bulk(department_output_obj=dept_output_obj)
+                if dept_output_obj is None or output_dimensions_created is None:
+                    raise Exception("department objective's output not created.")
+                
                 if output_dimensions_created:
                     is_output_dimensions_set = True
             
@@ -197,6 +219,10 @@ class DepartmentOutputCreateView(SuccessMessageMixin, CreateView):
         try:
             self.get_output_weight_progress()
             
+            is_within, _ = self.date_rules()
+            if is_within:
+                messages.info(request, "<strong>Take Note:</strong> The department objective's outputs/activities you are creating applies to last year.")
+                        
             if self.get_designation_obj() is None:
                 logger.warning(f"[DepartmentOutputCreateView] get_designation_obj() with pk: {self.kwargs.get('designation_id')}, not found error")
                 return redirect("object_not_found_error", object_name=slugify("Department objective"))
@@ -239,7 +265,9 @@ class DepartmentOutputDetailUpdateView(SuccessMessageMixin, UpdateView):
         
         context["department_objective"] = self.get_object().department_objective
         context["designation_obj"] = self.get_object().designation
-        context["is_section_head"] = is_section_head(user_id=self.request.user.id)
+        context["is_section_head"] = is_section_head(user_id=self.request.user.id,
+                                                     output_cost_center_id=self.get_object().department_objective.cost_center.id
+                                                     )
         return context
     
     def payload_validation(self, form):

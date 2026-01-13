@@ -87,7 +87,8 @@ class AppraisalDependanciesInitialisationService:
             appraisal_output_perf_dimension_obj = AppraisalOutPutPerformanceDimensionScore(
                 appraisal_department_output=appraisal_department_output_obj,
                 performance_dimension=output_perf_dimension_obj,
-                is_scored=is_scored
+                is_scored=is_scored,
+                created_date=appraisal_department_output_obj.created_date # sync created date from parent
             )
             appraisal_output_perf_dimension_objs_list.append(appraisal_output_perf_dimension_obj)
             
@@ -103,7 +104,8 @@ class AppraisalDependanciesInitialisationService:
                 appraisee_personal_attr_obj = AppraiseePersonalAttribute(
                     appraisal=appraisal_object,
                     personal_attribute=personal_attr_obj,
-                    quarter=year_quarter_obj
+                    quarter=year_quarter_obj,
+                    created_date=appraisal_object.created_date
                 )
                 appraisee_personal_attr_objs_list.append(appraisee_personal_attr_obj)
         apprasee_personal_attr_repo = AppraiseePersonalAttributeRepository()
@@ -118,12 +120,14 @@ class AppraisalDependanciesInitialisationService:
             hr_obj = AppraisalConfirmationStatus(
                 appraisal=appraisal_object,
                 year_quarter=year_quarter_obj,
-                confirmed_by=REVIEWERS_CONFIRMATION_STATUS[2][0]
+                confirmed_by=REVIEWERS_CONFIRMATION_STATUS[2][0],
+                created_date=appraisal_object.created_date
             )
             reviewer_obj = AppraisalConfirmationStatus(
                 appraisal=appraisal_object,
                 year_quarter=year_quarter_obj,
-                confirmed_by=REVIEWERS_CONFIRMATION_STATUS[1][0]
+                confirmed_by=REVIEWERS_CONFIRMATION_STATUS[1][0],
+                created_date=appraisal_object.created_date
             )
             appraisal_confirmation_list.append(hr_obj)
             appraisal_confirmation_list.append(reviewer_obj)
@@ -135,7 +139,8 @@ class AppraisalDependanciesInitialisationService:
         for year_quarter_obj in year_quarter_qr:
             overall_comment_obj = AppraisalOverallComments(
                 appraisal=appraisal_obj,
-                quarter=year_quarter_obj
+                quarter=year_quarter_obj,
+                created_date=appraisal_obj.created_date
             )
             comments_list.append(overall_comment_obj)
         repo = AppraisalOverallCommentsRepository()
@@ -155,7 +160,8 @@ class AppraisalDependanciesInitialisationService:
                             appraisal=appraisal_object,
                             stage_name=stage.value["stage_name"],
                             stage_description=stage.value["description"],
-                            stage_num=index + 1
+                            stage_num=index + 1,
+                            created_date=appraisal_object.created_date
                         )
                     )
                 
@@ -202,7 +208,8 @@ class AppraisalDependanciesInitialisationService:
         for yr_obj in year_quarter_qr:
             obj = TrainingAndDevelopment(
                 appraisal=appraisal_obj,
-                quarter=yr_obj
+                quarter=yr_obj,
+                created_date=appraisal_obj.created_date
             )
             objs_list.append(obj)
         return repo.bulk_create(train_dev_list=objs_list)
@@ -214,7 +221,8 @@ class AppraisalDependanciesInitialisationService:
         for yr_obj in year_quarter_qr:
             obj = PerformanceProgressReview(
                 appraisal=appraisal_obj,
-                quarter=yr_obj
+                quarter=yr_obj,
+                created_date=appraisal_obj.created_date
             )
             objs_list.append(obj)
         repo = PerformanceReviewRepository()
@@ -247,7 +255,7 @@ class AppraisalDependanciesInitialisationService:
                     if year_quarter_objects != 4:
                         raise Exception(f"create_all_dependencies, with pk: {appraisal_id}, has {year_quarter_objects} - 4 instances required.")
 
-                    department_output_qr = self.department_output_repo.fetch_by_cost_center_id_designation_id(designation_id=designation_obj.id, cost_center_id=appraisee_cost_center.id)
+                    department_output_qr = self.department_output_repo.fetch_by_cost_center_id_designation_id_year(designation_id=designation_obj.id, cost_center_id=appraisee_cost_center.id, year=year)
                     if not department_output_qr.exists():
                         raise Exception(f"Departmental outputs for appraisal pk: {appraisal_id}, with designation pk: {designation_obj.id} cost center pk: {appraisee_cost_center.id} has no departmental outputs set")
                     

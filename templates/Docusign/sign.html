@@ -1,0 +1,11 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% block content %}
+  <h1>Sign: {{ document.title }}</h1>
+  <p>Uploaded: {{ document.created_at }}</p>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Sign document</button>
+  </form>
+{% endblock %}

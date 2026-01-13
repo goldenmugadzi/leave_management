@@ -478,7 +478,7 @@ def send_notification(request, url, app, obj,id):
 #     domain_name = config('be_url')
 #     cc_recipients = []
 #     cc_recipients_names = []
-#     redirect_url = f"{domain_name}/graphql"  # Adjust as needed for your frontend
+#     redirect_url = f"{domain_name}/gql"  # Adjust as needed for your frontend
 #     message = "We kindly request that you review and take necessary action regarding this"
 
 #     hour = datetime.now().hour
@@ -531,7 +531,7 @@ def gql_send_notification(obj):
     domain_name = config('be_url')
     cc_recipients = []
     cc_recipients_names = []
-    redirect_url = f"{domain_name}/graphql"  # Adjust for your frontend
+    redirect_url = f"{domain_name}/gql"  # Adjust for your frontend
     message = "We kindly request that you review and take necessary action regarding this"
 
     hour = datetime.now().hour

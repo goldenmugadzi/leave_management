@@ -18,6 +18,7 @@ class CustomerType(DjangoObjectType):
 class TokenType(DjangoObjectType):
     class Meta:
         model = Token
+        name = 'MeterToken'  # Custom GraphQL type name to avoid JWT conflicts
 
 class ReimbursementType(DjangoObjectType):
     class Meta:

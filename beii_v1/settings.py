@@ -23,18 +23,19 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = ["*"]
 CORS_ALLOW_ALL_ORIGINS = True
 
-# CORS_ALLOWED_ORIGINS = [
-#     config('BASE_URL') + ":" + config('PORT'),
-#     config('BASE_URL') + ":3000",
-# ]
+CORS_ALLOWED_ORIGINS = [
+    config('BASE_URL') + ":" + config('PORT'),
+    config('BASE_URL') + ":3000",
+    "https://ca173bdd6d5b.ngrok-free.app",
+]
+CORS_ALLOW_CREDENTIALS = True
 
 # CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = [
     config('BASE_URL'),
     config('BASE_URL') + ":" + config('PORT'),
-    "https://6a436b963963.ngrok-free.app",
-    # Add your production domain here
-    # "https://your-production-domain.com"
+    config('BASE_URL') + ":3000",
+    "https://ca173bdd6d5b.ngrok-free.app",
 ]
 
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding',
@@ -118,9 +119,12 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'clearcache',
+    "crispy_forms",
+    "crispy_tailwind",
     'risk.audit.nonconformity',
     'it.beii_auth',
     'it.users',
+    'Docusign',
     'it.change_requests',
     'process_management',
     # 'executive.exec_dashboards',
@@ -158,8 +162,6 @@ INSTALLED_APPS = [
     'tokens',
     'commecial.tempertockens',
     'competence_building.apps.CompetenceBuildingConfig',
-    'crispy_forms',
-    'crispy_tailwind',
     'graphene_django',
     'graphene_file_upload',
     'safety',
@@ -181,6 +183,7 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL = 'users.UserProfile'
 
 MIDDLEWARE = [
+    'beii_v1.graphql_middleware.GraphQLLoggingMiddleware',  # Add at the top to catch everything
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -234,6 +237,10 @@ SESSION_COOKIE_HTTPONLY = True
 # CSRF cookie must be accessible to JavaScript for AJAX/React apps
 # Reference: https://docs.djangoproject.com/en/4.2/ref/settings/#csrf-cookie-httponly
 CSRF_COOKIE_HTTPONLY = False
+
+# Cookie SameSite settings for cross-origin session sharing
+SESSION_COOKIE_SAMESITE = 'Lax'  # Allow session cookies for same-site and top-level navigation
+CSRF_COOKIE_SAMESITE = 'Lax'  # Allow CSRF cookies for same-site and top-level navigation
 
 # Additional Security Headers
 SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevent MIME-type sniffing
@@ -367,6 +374,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
+        'it.users.schema': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
         'dashboard_enhancement': {
             'handlers': ['dashboard_file', 'console'],
             'level': 'INFO',
@@ -440,6 +452,15 @@ LOGIN_URL = '/accounts/login'
 os.environ['TIKA_SERVER_JAR'] = os.path.join(BASE_DIR,'static','tika','tika-server-standard-2.9.2.jar')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# Path to Poppler binaries (pdfinfo, pdftoppm, etc.)
+# If you installed Poppler via Chocolatey, the executables are in:
+#   C:\ProgramData\chocolatey\bin
+# You can override via an environment variable or .env: POPPLER_PATH
+POPPLER_PATH = config('POPPLER_PATH', default=r"C:\ProgramData\chocolatey\lib\poppler\tools\Library\bin")
+
+# Add Poppler bin to PATH so pdf2image can find pdfinfo.exe
+if POPPLER_PATH:
+    os.environ['PATH'] = POPPLER_PATH + os.pathsep + os.environ.get('PATH', '')
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static", BASE_DIR / "uploads", BASE_DIR / "media"]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')

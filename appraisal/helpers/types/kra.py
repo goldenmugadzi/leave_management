@@ -67,7 +67,7 @@ class RoleFilterChoices(Enum):
 
     @classmethod
     def choices(cls):
-        return [(choice.value, choice.name.replace("_", " ").title()) for choice in cls]
+        return [(choice.value, choice.value.replace("_", " ").title()) for choice in cls]
 
 
 class ActivityType(BaseModel):

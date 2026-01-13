@@ -1,5 +1,5 @@
 from graphene import (ObjectType, List, Field, ID, Int, String, Mutation)
-from .models import ToolOrEquipment, ToolsAndEquipmentForm, AssignedToolOrEquipment, Comment
+from .models import ToolOrEquipment, ToolsAndEquipmentRegister, ToolsAndEquipmentRegisterItem, Comment
 from .typses import ToolOrEquipmentType, ToolsAndEquipmentFormType, AssignedToolOrEquipmentType, CommentType
 from it.users.models import UserProfile
 
@@ -21,16 +21,16 @@ class Query(ObjectType):
         except ToolOrEquipment.DoesNotExist:
             return None
     def resolve_tools_and_equipment_forms(root, info):
-        return ToolsAndEquipmentForm.objects.all()  
+        return ToolsAndEquipmentRegister.objects.all()  
     def resolve_assigned_tools_and_equipment(root, info):
-        return AssignedToolOrEquipment.objects.all()
+        return ToolsAndEquipmentRegisterItem.objects.all()
     def resolve_assigned_tool_or_equipment_by_id(root, info, id):
         try:
-            return AssignedToolOrEquipment.objects.get(pk=id)
-        except AssignedToolOrEquipment.DoesNotExist:
+            return ToolsAndEquipmentRegisterItem.objects.get(pk=id)
+        except ToolsAndEquipmentRegisterItem.DoesNotExist:
             return None
     def resolve_my_tools_and_equipment(root, info, user_id):
-        return AssignedToolOrEquipment.objects.filter(assigned_to__id=user_id)
+        return ToolsAndEquipmentRegisterItem.objects.filter(assigned_to__id=user_id)
     def resolve_comments(root, info):
         return Comment.objects.all()
     def resolve_comment_by_id(root, info, id):
@@ -50,8 +50,8 @@ class CreateComment(Mutation):
 
     def mutate(self, info, comment, assigned_tool_or_equipment_id, author_id):
         try:
-            assigned_tool = AssignedToolOrEquipment.objects.get(pk=assigned_tool_or_equipment_id)
-        except AssignedToolOrEquipment.DoesNotExist:
+            assigned_tool = ToolsAndEquipmentRegisterItem.objects.get(pk=assigned_tool_or_equipment_id)
+        except ToolsAndEquipmentRegisterItem.DoesNotExist:
             return CreateComment(message="Assigned tool or equipment not found.")
 
         try:

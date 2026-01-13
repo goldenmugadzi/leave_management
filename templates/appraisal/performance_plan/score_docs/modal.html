@@ -1,0 +1,86 @@
+{% load crispy_forms_tags %}
+
+
+<!-- Modal (Hidden by Default) -->
+<div id="SupportingDocsModal-{{score_object_id}}" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50 h-fit">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-1/2">
+        <div class="flex justify-between">
+            <div>
+                <h3 class="text-center font-bold">Supporting Documents</h3>            
+            </div>
+            <button type="button" onclick="closeSupportingDocsModal('{{score_object_id}}')" class="px-4 py-2 text-white bg-red-500 rounded-lg">Close</button>
+        </div>
+        <p class="text-sm text-muted mb-4">
+            Performance Dimension: <strong>{{ performance_dimension.description }} ( {{ performance_dimension.performance_indicator }} )</strong>.
+            with target of <strong>{{ performance_dimension.agreed_target }} %</strong> and allowable variance of <strong>{{ performance_dimension.allowable_variance }} %</strong>
+        </p>              
+        
+        <div class="p-4 bg-white shadow-md rounded-lg">
+            {% if is_appraisee and is_within_current_quarter %}
+                <div class="flex justify-end mb-2">
+                    <a href="{% url 'score_doc_create' score_object_id  %}"
+                        class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Add Documents</a>
+                </div>
+            {% endif %}
+
+            <div style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc;">
+                <table class="min-w-full border-collapse border border-gray-200 shadow-md rounded-lg">
+                    <thead>
+                    <tr class="bg-blue-500 text-white">
+                        <th class="px-6 py-2 text-left text-sm font-semibold">Name</th>
+                        <th class="px-6 py-2 text-left text-sm font-semibold">Qualification Document</th>
+                        <th class="px-6 py-2 text-left text-sm font-semibold"></th>
+                        
+                    </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                    {% for score_document_obj in score_documents_qr %}
+                        <tr class="hover:bg-gray-100 py-2">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                
+                                {{score_document_obj.name}}
+                                
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if score_document_obj.documents %}
+                                    <a href="{{ score_document_obj.documents.url }}" target="_blank"
+                                    class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white p-2">
+                                    Preview Document
+                                    </a>
+                                {% else %}
+                                    <span class="bg-gray-500 inline-block rounded-full text-black p-2">
+                                        No Document
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if is_appraisee and is_within_current_quarter %}
+                                    {% if score_document_obj.documents %}
+                                        <a href="{% url 'score_doc_update' score_document_obj.id %}" 
+                                            class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white p-2">
+                                        Update 
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                            
+
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function openSupportingDocsModal(score_object_id) {
+        document.getElementById(`SupportingDocsModal-${score_object_id}`).classList.remove("hidden");
+    }
+
+    function closeSupportingDocsModal(score_object_id) {
+        document.getElementById(`SupportingDocsModal-${score_object_id}`).classList.add("hidden");
+    }
+</script>

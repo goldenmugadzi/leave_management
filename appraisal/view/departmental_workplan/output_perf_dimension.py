@@ -1,4 +1,5 @@
 from typing import Any, Dict, List
+from decimal import Decimal
 from django.forms import BaseModelForm
 from django.http import HttpResponse
 from django.views.generic.edit import CreateView, UpdateView
@@ -35,6 +36,46 @@ class OutPutPerformanceDimensionTemplateView(TemplateView):
         repo = OutPutPerformanceDimensionRepository()
         return repo.fetch_by_department_output_id(department_output_id=self.kwargs.get('department_output_id'))
     
+    def get_forms(self):
+        perf_dimensions = self.get_all_output_dimension()
+
+        forms = {
+            "quantity_form": None,
+            "quality_form": None,
+            "timeliness_form": None,
+            "cost_form": None,
+        }
+
+        for perf_dimension in perf_dimensions:
+            indicator = perf_dimension.performance_indicator
+
+            match indicator:
+                case "Quantity":
+                    forms["quantity_form"] = OutPutPerformanceDimensionUpdateForm(
+                        instance=perf_dimension
+                    )
+
+                case "Quality":
+                    forms["quality_form"] = OutPutPerformanceDimensionUpdateForm(
+                        instance=perf_dimension,
+                        is_quality_indicator=True
+                    )
+
+                case "Timeliness":
+                    forms["timeliness_form"] = OutPutPerformanceDimensionUpdateForm(
+                        instance=perf_dimension
+                    )
+
+                case "Cost":
+                    forms["cost_form"] = OutPutPerformanceDimensionUpdateForm(
+                        instance=perf_dimension
+                    )
+        return forms
+
+    def is_section_head(self):
+        repo = AppraisalRoleRepository()
+        return repo.is_section_head(user_id=self.request.user.id, cost_center_id=self.get_department_output_obj().department_objective.cost_center.id)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         dept_output_progress_data = {
@@ -43,9 +84,80 @@ class OutPutPerformanceDimensionTemplateView(TemplateView):
             "remain_weight": self.get_weight_progress().remaining_weight
         }
         context.update(**dept_output_progress_data)
+        context.update(**self.get_forms())
         context["department_out_obj"] = self.get_department_output_obj()
         context["performance_dimensions_qr"] = self.get_all_output_dimension()
+        context["is_section_head"] = self.is_section_head()
         return context
+        
+    
+    def payload_validation(self, form):
+        payload_strategy = PayloadDeserializationStrategyContext(strategy=OutputPerformanceDimensionDeserializationStrategy())
+        return payload_strategy.deserialize_payload(request_object=self.request, form_object=form)
+
+    def get_perf_dimension_instance(self, perf_dimension_id: int):
+        repo = OutPutPerformanceDimensionRepository()
+        return repo.get_by_id(perf_dimension_id)
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            perf_dimension_id = request.POST.get('perf_indicator_request')
+            
+            if perf_dimension_id is None:
+                raise Exception("Missing performance dimension pk")
+            
+            perf_dimension_obj = self.get_perf_dimension_instance(perf_dimension_id=perf_dimension_id)
+            if perf_dimension_obj is None:
+                raise Exception(f"Performance dimension not found with pk: {perf_dimension_id}")
+            
+            form = None
+            match perf_dimension_obj.performance_indicator:
+                case "Quantity":
+                    form = OutPutPerformanceDimensionUpdateForm(
+                        request.POST,
+                        instance=perf_dimension_obj
+                    )
+
+                case "Quality":
+                    form = OutPutPerformanceDimensionUpdateForm(
+                        request.POST,
+                        instance=perf_dimension_obj,
+                        is_quality_indicator=True
+                    )
+
+                case "Timeliness":
+                    form = OutPutPerformanceDimensionUpdateForm(
+                        request.POST,
+                        instance=perf_dimension_obj
+                    )
+
+                case "Cost":
+                    form = OutPutPerformanceDimensionUpdateForm(
+                        request.POST,
+                        instance=perf_dimension_obj
+                    )
+                case _:
+                    raise Exception("performance dimension has None Performance Indicator")
+
+            if form is None:
+                raise Exception("performance dimension has None Performance Indicator")
+            payload = self.payload_validation(form=form)
+            
+            if self.get_weight_progress().remaining_weight < payload.weight:
+                messages.error(self.request, "The weight cannot be greater than remain departmental output weight. Please adjust weight to ensure it does not exceed the remain departmental output weight.")
+            else:
+                repo = OutPutPerformanceDimensionRepository()
+                repo.update(
+                            output_perf_dimension_obj=self.get_perf_dimension_instance(perf_dimension_id=perf_dimension_id),
+                            data=payload
+                        )
+                messages.success(request=request, message="Performance Dimension saved successfully")
+        except Exception as e:
+            logger.error(f"[OutPutPerformanceDimensionTemplateView] post(), failed with error: {e}")
+            messages.error(request, "Something went wrong, please contact the admin")
+
+        return redirect(reverse("output_perf_dimension_index", kwargs={"department_output_id": self.kwargs.get('department_output_id')}))
+
     
     def get(self, request, *args, **kwargs):
         self.object = None

@@ -13,6 +13,7 @@ from ...forms.departmental_plan import CostCenterFilterForm, DepartmentObjective
 from ...models import DepartmentObjective
 from ...repository.departmental_workplan import DepartmentalObjectiveRepository
 from ...repository.roles import AppraisalRoleRepository
+from ..helper import extended_date_rules
 from loguru import logger
 from datetime import datetime
 
@@ -48,7 +49,6 @@ class DepartmentObjectiveTemplateView(TemplateView):
     
     def get_cost_center_and_year(self):
         cost_center, year = self.get_filtered_cost_center_and_year()
-        
         if cost_center is None and year is None:
             cost_center, year = self.get_user_cost_center_objectives()
 
@@ -57,7 +57,7 @@ class DepartmentObjectiveTemplateView(TemplateView):
     
     def get_all_departmental_objectives(self):
         cost_center, year = self.get_cost_center_and_year()
-        
+
         if cost_center is None:
             return []
         
@@ -97,7 +97,10 @@ class DepartmentObjectiveCreateView(SuccessMessageMixin, CreateView):
     def is_section_head(self):
         repo = AppraisalRoleRepository()
         return repo.is_section_head(user_id=self.request.user.id, cost_center_id=self.request.user.cost_center.id)
-        
+    
+    def date_rules(self):
+        return extended_date_rules()
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
@@ -111,14 +114,36 @@ class DepartmentObjectiveCreateView(SuccessMessageMixin, CreateView):
             cost_center_obj = form.cleaned_data.get("cost_center")
             objective_description = form.cleaned_data.get("objective_description")
             
+            if self.request.user.cost_center != cost_center_obj:
+                messages.error(self.request, f"You are only authorized to create objectives for your department, section, or cost center.")
+                return super().form_invalid(form)
+            
+            departmental_objective_obj = None
             repo = DepartmentalObjectiveRepository()
-            departmental_objective_obj = repo.create(creator=creator, key_result_area=kra_obj, cost_center=cost_center_obj, department_objective_desc=objective_description)
+            is_within, prev_year_date = self.date_rules()
+            if is_within:
+                departmental_objective_obj = repo.create(creator=creator, key_result_area=kra_obj, cost_center=cost_center_obj, department_objective_desc=objective_description, creation_date=prev_year_date)
+            else:
+                departmental_objective_obj = repo.create(creator=creator, key_result_area=kra_obj, cost_center=cost_center_obj, department_objective_desc=objective_description)
+            
+            if departmental_objective_obj is None:
+                raise Exception("department objective not created.")
+            
             form.instance = departmental_objective_obj
         except Exception as e:
             logger.error(f"DepartmentObjectiveCreateView create failed with error: {e}")
             messages.error(self.request, f"An unexpected error occurred, please try again")
             return super().form_invalid(form)
         return super().form_valid(form)
+    
+    def get(self, request, *args, **kwargs):
+        self.object = None
+        
+        is_within, _ = self.date_rules()
+        if is_within:
+            messages.info(request, "<strong>Take Note:</strong> The department objectives you are creating applies to last year.")
+                    
+        return super().get(request, *args, **kwargs)
     
 class DepartmentObjectiveDetailUpdateView(SuccessMessageMixin, CreateView):
     model = DepartmentObjective

@@ -1,0 +1,92 @@
+
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load humanize %}{% load custom_tags %}
+
+{% block styles %}
+<link  rel="stylesheet"  href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
+<style>
+  .dataTables_wrapper .dataTables_length select {
+    width: 4rem;
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="content-wrapper">
+  <div class="grid grid-cols-1">
+    <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+     
+       <h3 class="text-center font-bold  mb-4">Documents</h3>
+      <div class="grid grid-cols-5 container text-center">
+        <a href="{% url  'docusign:upload' %}" class="bg-green-400 hover:bg-green-300 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Upload a new document</a>
+        {% comment %} <a href="{% url 'document:checklist' %}" class="bg-indigo-400 hover:bg-indigo-300 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create from checklist</a>
+        <a href="{% url 'document:i_created' %}" class="bg-yellow-400 hover:bg-yellow-300 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">I created</a>
+        <a href="{% url 'document:assigned_to_me' %}" class="bg-red-400 hover:bg-red-300 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">For Me</a>
+        <a href="{% url 'document:awaiting_my_action' %}" class="bg-purple-400 hover:bg-purple-300 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Awaiting My Action</a> {% endcomment %}
+      </div>
+      <br> <table id="document" class="table table-striped stripe table-bordered">
+        <thead>
+          <tr>
+            <th>Description</th>
+         <th class="col-2" >Date</th>   
+         <th>Action</th>   {% comment %} 
+            <th>Auditor</th>
+            <th>Recipient</th>
+            <th>Cost Centre</th>
+            <th>Status</th> {% endcomment %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for document in documents %}
+          <tr class="h-1 ">
+       <td> <strong>{{ document.title }}</strong> </td>
+           <td>{{ document.created_at|date:'d-m-Y @ H:i ' }}</td>
+          <td ><a  class="bg-yellow-400 hover:bg-yellow-300 inline-block rounded-full mx-3 text-white py-2 px-4 rounded"
+           href="{% url 'docusign:sign' document.pk %}">Sign</a></td>
+        {% comment %} 
+            <td>{{ document.description |default_if_none:''}}</td>
+            <td>{% if document.created_by == user %} You {% else %} {{document.created_by.get_full_name }} {% endif %}</td>
+            <td>{% if document.recipient == user %} You {% else %} {{document.recipient.get_full_name }} {% endif %}</td>
+            <td>{{document.cost_center|default_if_none:document.created_by.cost_center}}</td>
+            <td>{% if document.closed == 1 %}Closed{% elif document.resolved == 1 %}Resolved{% elif document.accepted == 1 %}Accepted {% elif document.accepted == 0 %} Rejected {% else %}  Created  {% endif %}</td> {% endcomment %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% comment %} <div class=" container text-center ">
+        <span class="text-blue-400  mx-4 rounded border-2 border border-red-300 px-1  font-bold rounded">
+          There are {{ count }} document records including those displayed
+        </span>
+    </div> {% endcomment %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script>
+  $(document).ready(function () {
+    // Initialize the DataTable with options and Tailwind CSS classes
+    $("#document").DataTable({
+      // Set the number of rows to display per page
+      "pageLength": 10,
+  
+      // Enable sorting on the specified columns
+      "columnDefs": [
+        { "orderable": true, "targets": [0, 1, 2] }
+      ],
+  
+      // Enable searching within the table
+      "searching": true,
+  
+      // Display the DataTable in a responsive manner
+      "responsive": true,
+  
+     
+    });
+  });
+</script>
+{% endblock %}
