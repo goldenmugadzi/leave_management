@@ -100,19 +100,19 @@ class AccidentReport(models.Model):
     ]
     
     employee_involved = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True,related_name="accident_reports")
+    ec_number = models.CharField(max_length=500)
     department = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
-    gender = models.CharField(max_length=300 ,choices=Sex)
-    address_of_person_involved = models.CharField(max_length=500)
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
+    gender = models.CharField(max_length=300 ,choices=Sex)
     age = models.PositiveIntegerField(default=0)
+    address_of_person_involved = models.CharField(max_length=500)
+    cost_center = models.ForeignKey(CostCenter, on_delete=models.CASCADE, blank=True, null=True)
     date_of_accident = models.DateField()
     time_of_accident  = models.TimeField()
     authority_received_datetime = models.DateTimeField( verbose_name="Date and Time Report Was Received by Authority")
     authority_received_from = models.CharField(max_length=255,verbose_name="Name of Person Who Reported to Authority")
     police_received_datetime = models.DateTimeField(verbose_name="Date and Time Report Was Received by Police" )
     police_received_from = models.CharField(max_length=255, verbose_name="Name of Person Who Reported to Police")
-    cost_center = models.ForeignKey(CostCenter, on_delete=models.CASCADE, blank=True, null=True)
-    ec_number = models.CharField(max_length=500)
     severity_Of_Accident  = models.CharField(max_length=500, choices=Severity_Of_Accident )
     nature_of_accident = models.CharField(max_length=600, choices=Nature_of_Accidents)
     nature_of_injury = models.CharField(max_length=400, choices=Nature_of_injury)
@@ -120,11 +120,11 @@ class AccidentReport(models.Model):
     location_of_accident_giving_line_and_section_number = models.TextField(max_length=800)
     risk_assessment_carried_out = models.CharField(max_length=800 ,choices=Risk_Assessment)
     operation_of_protective_devices = models.TextField(max_length=600)
-    attach_photographs = models.ImageField(upload_to='accident_photos/', blank=True, null=True)
     steps_taken_on_the_short_term = models.CharField(max_length=700)
     safety_preparation_carried_out = models.CharField(max_length=900,choices=Safety_Preparation)
     attach_written_statements = models.ImageField(upload_to='accident_photos/', blank=True, null=True)
     other_information_considered_neccesary = models.TextField(max_length=600)
+    attach_photographs = models.ImageField(upload_to='accident_photos/', blank=True, null=True)
     for_electrical_state_voltage = models.TextField(max_length=600,choices=Voltage)
     status = models.CharField(
     max_length=20,
@@ -146,22 +146,22 @@ class VehicleAccidentReport(models.Model):
         blank=True,
         null=True
     )
-    home_address = models.TextField()
-    age = models.PositiveIntegerField()
-    drivers_license = models.CharField(max_length=50)
-    designation = models.ForeignKey(Designations, on_delete=models.DO_NOTHING, blank=True, null=True)
-    place_of_issue = models.CharField(max_length=100)
-    date_of_issue = models.DateField()
     ec_number = models.CharField(max_length=50)
-    work_station = models.CharField(max_length=100)
-
-    # 2. Vehicle Details
+    designation = models.ForeignKey(Designations, on_delete=models.DO_NOTHING, blank=True, null=True)
+      # 2. Vehicle Details
     vehicle_details = models.ForeignKey(
         'Transport.Vehicle',
         on_delete=models.CASCADE,
         related_name='accident_reports',
         verbose_name="fleet_Number/Make/Reg_Number"
     )
+    home_address = models.TextField()
+    age = models.PositiveIntegerField()
+    date_of_issue = models.DateField()
+    place_of_issue = models.CharField(max_length=100)
+    drivers_license = models.CharField(max_length=50)
+    work_station = models.CharField(max_length=100)
+
     allocation_to_section = models.CharField(max_length=100)
     state_if_hired = models.CharField(max_length=3, choices=HIRED_CHOICES)
 

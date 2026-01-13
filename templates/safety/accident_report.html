@@ -126,6 +126,7 @@ document.addEventListener("DOMContentLoaded", function () {
     background: #0056b3;
     transform: translateY(-2px);
   }
+  
 
 </style>
 {% endblock %}
@@ -222,8 +223,12 @@ document.addEventListener("DOMContentLoaded", function () {
           {{ field }}
         {% else %}
           <div>
+
             <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
               {{ field.label }}
+              {% if field.name in 'description_file written_statements photographs' %}
+                <span class="text-sm text-gray-500 font-semibold">(optional)</span>
+              {% endif %}
             </label>
 
             {{ field }}
@@ -281,7 +286,12 @@ document.addEventListener("DOMContentLoaded", function () {
           {{ field }}
         {% else %}
           <div class="mb-5 grid grid-cols-1">
-            <label for="{{ field.id_for_label }}" class="block text-left text-sm font-medium text-gray-700">{{ field.label }}</label>
+            <label for="{{ field.id_for_label }}" class="block text-left text-sm font-medium text-gray-700">
+              {{ field.label }}
+              {% if field.name in 'attach_written_statements attach_photographs' %}
+                <span class="text-sm text-gray-500 font-semibold">(optional)</span>
+              {% endif %}
+            </label>
             <div class="text-blue-500 text-sm">{{ field.help_text }}</div>
             {{ field }}
             {% if field.errors %}
@@ -324,11 +334,9 @@ document.addEventListener("DOMContentLoaded", function () {
               {{ field.label }}
             </label>
             {{ field }}
-
             {% if field.help_text %}
               <p class="text-xs text-blue-500 mt-1">{{ field.help_text }}</p>
             {% endif %}
-
             {% for error in field.errors %}
               <p class="text-xs text-red-500 mt-1">{{ error }}</p>
             {% endfor %}
@@ -360,6 +368,44 @@ document.addEventListener("DOMContentLoaded", function () {
     </div>
 
   </div>
+    <!-- Select2 JS/CSS for dropdowns -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+    <style>
+      /* Force select2 dropdowns to match input styling */
+      .select2-container .select2-selection--single {
+        height: 40px !important;
+        padding: 0.375rem 0.75rem !important;
+        border-radius: 0.75rem !important;
+        border: 1px solid #d1d5db !important;
+        box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        font-size: 1rem !important;
+        line-height: 1.5 !important;
+        color: #111827 !important;
+        background: #fff !important;
+      }
+      .select2-container--classic .select2-selection--single {
+        background: #fff !important;
+        border: 1px solid #d1d5db !important;
+      }
+      .select2-container .select2-selection--single .select2-selection__rendered {
+        line-height: 38px !important;
+        color: #111827 !important;
+      }
+      .select2-container .select2-selection--single .select2-selection__arrow {
+        height: 38px !important;
+      }
+    </style>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        $("select.select2").select2({
+          width: '100%',
+          theme: 'classic',
+          allowClear: true,
+          placeholder: 'Select an option',
+        });
+      });
+    </script>
 </form>
 
 
@@ -439,6 +485,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 </div>
 
+
 <script>
   // Example: Populate filter values dynamically (replace with AJAX in production)
  
@@ -465,6 +512,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // TODO: Implement AJAX or page reload to filter statistics and table
     alert('Filtering by ' + type + ': ' + value);
   }
+  
   function selectReport(type) {
     const forms = ['propertyForm', 'staffForm', 'vehicleForm'];
 
@@ -472,20 +520,30 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById(form).style.display = 'none';
     });
 
-    if (type === 'property') {
-        document.getElementById('propertyForm').style.display = 'block';
-    } else if (type === 'staff') {
-        document.getElementById('staffForm').style.display = 'block';
-    } else if (type === 'vehicle') {
-        document.getElementById('vehicleForm').style.display = 'block';
-    }
+    const activeForm = document.getElementById(type + 'Form');
+    activeForm.style.display = 'block';
 
-    // Scroll to form smoothly
+    // Reinitialize Select2 for visible form only
+    setTimeout(() => {
+        $(activeForm).find('select.select2').each(function () {
+            if ($(this).hasClass("select2-hidden-accessible")) {
+                $(this).select2('destroy');
+            }
+            $(this).select2({
+                width: '100%',
+                theme: 'classic',
+                allowClear: true,
+                placeholder: 'Select an option'
+            });
+        });
+    }, 100);
+
     window.scrollTo({
-        top: document.getElementById(type + 'Form').offsetTop - 50,
+        top: activeForm.offsetTop - 50,
         behavior: 'smooth'
     });
 }
+
 
 function showForm() {
     const forms = ['propertyForm', 'staffForm', 'vehicleForm'];

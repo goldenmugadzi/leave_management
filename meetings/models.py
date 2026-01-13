@@ -21,6 +21,7 @@ class Venue(models.Model):
 class VenueBooking(models.Model):
     venue = models.ForeignKey(Venue, on_delete=models.CASCADE)
     department = models.ForeignKey(Sections, on_delete=models.DO_NOTHING,  verbose_name="Department/Region")
+    created_by = models.ForeignKey(UserProfile, on_delete=models.DO_NOTHING,blank=True, null=True, related_name="bookings")
     start_time = models.TimeField()
     start_date = models.DateField()
     end_time = models.TimeField()
