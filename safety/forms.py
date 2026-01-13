@@ -70,7 +70,11 @@ class AccidentReportForm(forms.ModelForm):
 
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})
-
+        
+        # Ensure all attachments are optional
+        for fname in ['attach_written_statements', 'attach_photographs']:
+            if fname in self.fields:
+                self.fields[fname].required = False
 
 class VehicleAccidentReportForm(forms.ModelForm):
     class Meta:
@@ -85,32 +89,43 @@ class VehicleAccidentReportForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Base styling for all inputs
         base_classes = (
-            "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
-            "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
-            "focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            "block w-full rounded-md border-0 text-gray-900 shadow-sm "
+            "ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 "
+            "focus:ring-2 focus:ring-inset focus:ring-indigo-600 "
+            "sm:text-sm sm:leading-6"
         )
 
-        # Dropdown fields that need Select2
+        # FIX: select needs explicit height
+        select_classes = base_classes + " h-10"
+
+        input_classes = base_classes + " py-1.5"
+
         select_fields = [
             'designation', 'driver_name', 'state_if_hired',
             'department', 'vehicle_details'
         ]
 
-        # Loop through all fields (THIS MUST BE INSIDE __init__)
         for field_name, field in self.fields.items():
 
-            # Apply base styles
-            field.widget.attrs.update({'class': base_classes})
-
-            # If dropdown → append select2 class
+            # SELECT fields
             if field_name in select_fields:
-                field.widget.attrs['class'] += " select2"
+                field.widget.attrs.update({
+                    'class': select_classes + " select2"
+                })
 
-            # Textarea rows
-            if isinstance(field.widget, forms.Textarea):
-                field.widget.attrs.update({'rows': '3'})
+            # TEXTAREA
+            elif isinstance(field.widget, forms.Textarea):
+                field.widget.attrs.update({
+                    'class': base_classes,
+                    'rows': '3'
+                })
+
+            # ALL OTHER INPUTS
+            else:
+                field.widget.attrs.update({
+                    'class': input_classes
+                })
 
 
 
@@ -137,6 +152,11 @@ class PropertyLossIncidentForm(forms.ModelForm):
             })
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})
+        # Ensure all attachments are optional
+        for fname in ['description_file', 'written_statements', 'photographs']:
+            if fname in self.fields:
+                self.fields[fname].required = False
+
 
 class MemberOfPublicAccidentReportForm(forms.ModelForm):
     class Meta:

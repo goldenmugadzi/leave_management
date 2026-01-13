@@ -49,6 +49,7 @@ class VenueBookingForm(forms.ModelForm):
     class Meta:
         model = VenueBooking
         fields = '__all__'
+        exclude = ['created_by']
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),

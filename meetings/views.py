@@ -10,6 +10,9 @@ from django.utils.timezone import now
 from exchangelib import Credentials, Account, Configuration, Message, Mailbox
 from exchangelib import HTMLBody
 from django.contrib.auth.decorators import login_required
+from django.db.models import Exists, OuterRef
+from datetime import timedelta ,datetime
+
 
 @login_required
 def create_meeting(request, booking_id=None):
@@ -195,8 +198,6 @@ def meetings_dashboard(request):
         'is_requester': is_requester,
     })
 
-from datetime import timedelta
-
 def create_venue_booking(request):
     if request.method == 'POST':
         form = VenueBookingForm(request.POST)
@@ -211,7 +212,8 @@ def create_venue_booking(request):
             ).exists():
                 messages.error(request, "This venue is already booked for one or more of the selected days.")
                 return render(request, 'Meetings/book_venue.html', {'form': form})
-
+            
+            booking.created_by = request.user
             booking.status = "Pending"
             booking.save()
             messages.success(request, "Venue booked successfully.")
@@ -224,33 +226,27 @@ def create_venue_booking(request):
     form = VenueBookingForm()
     return render(request, 'Meetings/book_venue.html', {'form': form})
 
-
 def venues_datatable(request):
-    current_time = now()
-    current_date = current_time.date()
-    current_time_only = current_time.time()
+    today = now().date()
 
-    venues = Venue.objects.all()
-    data = []
+    booked = VenueBooking.objects.filter(
+        venue=OuterRef('pk'),
+        end_date__gte=today,
+        status__in=["Pending", "Approved"]
+    )
 
-    for v in venues:
-        active_booking = VenueBooking.objects.filter(
-            venue=v,
-            start_date__lte=current_date,
-            end_date__gte=current_date,
-            end_time__gte=current_time_only
-        ).exists()
+    venues = Venue.objects.annotate(
+        is_booked=Exists(booked)
+    ).filter(is_booked=False)
 
-        if not active_booking:
-            data.append({
-                "id": v.id,
-                "name": str(v),
-                "capacity": v.capacity,
-                "status": "Available"
-            })
+    data = [{
+        "id": v.id,
+        "name": str(v),
+        "capacity": v.capacity,
+        "status": "Available"
+    } for v in venues]
 
     return JsonResponse({"data": data})
-
 
 def booked_venues_datatable(request):
     bookings = VenueBooking.objects.all().order_by('-start_date', 'start_time')  # optional ordering
@@ -261,6 +257,7 @@ def booked_venues_datatable(request):
             "id": b.id,
             "venue": str(b.venue),
             "department": str(b.department),
+            "created_by": str(b.created_by),
             "start_time": b.start_time.strftime("%H:%M"),
             "end_time": b.end_time.strftime("%H:%M"),
             "start_date": b.start_date.strftime("%Y-%m-%d"),
@@ -271,8 +268,7 @@ def booked_venues_datatable(request):
         })
 
     return JsonResponse({"data": data})
-
-   
+ 
 def get_exchange_account():
   ## changed mail password
   ## password change
@@ -345,21 +341,66 @@ def booked_venue (request):
         
     })
 
+from django.utils.timezone import now
+
 def update_venue_booking(request, pk):
     booking = get_object_or_404(VenueBooking, pk=pk)
+
+    # 🔹 Store old status BEFORE saving
+    old_status = booking.status
 
     if request.method == "POST":
         form = VenueBookingForm(request.POST, instance=booking)
         if form.is_valid():
-            form.save()
+            updated_booking = form.save()
+
+            # -------- Notify booking creator --------
+            creator = updated_booking.created_by
+
+            # 🔹 Status → message mapping (PUT IT HERE)
+            status_messages = {
+                "Cancelled": "has been cancelled",
+                "Postponed": "has been postponed",
+                "Confirmed": "has been confirmed",
+                "Transferred to Another Venue": "has been transferred to another venue",
+            }
+
+            # 🔹 Only notify if status actually changed
+            if creator and old_status != updated_booking.status:
+                action = status_messages.get(
+                    updated_booking.status,
+                    "has been updated"
+                )
+
+                msg = (
+                    f"Your venue booking for {updated_booking.venue} {action}.\n"
+                    f"Booking period: {updated_booking.start_date} "
+                    f"to {updated_booking.end_date}"
+                )
+
+                notify_user(
+                    user_=creator,
+                    msg=msg,
+                    notification_type="Venue Booking Update",
+                    url="/meetings/booked-venues/",
+                    id=updated_booking.id,
+                    request=request
+                )
+            # ----------------------------------------
+
             messages.success(request, "Venue booking updated successfully.")
-            return redirect("booked_venue") 
+            return redirect("booked_venue")
         else:
             messages.error(request, "Please correct the errors below.")
     else:
         form = VenueBookingForm(instance=booking)
 
-    return render(request, "Meetings/venue_booking_update.html", {"form": form, "booking": booking})
+    return render(
+        request,
+        "Meetings/venue_booking_update.html",
+        {"form": form, "booking": booking}
+    )
+
 
 @login_required
 def scheduled_meetings(request):
@@ -374,3 +415,26 @@ def available_venues(request):
     return render(request, 'Meetings/available_venues.html', {
         'user': request.user,
     })
+    
+def notify_user(user_, msg, notification_type, url, id, request):
+    try:
+        Notification.objects.create(
+            user=user_,
+            message=msg,
+            notification_type=notification_type,
+            notification_id=id,
+            url=url,
+            created_at=datetime.now(),
+        )
+        
+        return True
+    except Exception as e:
+        print("error: ", str(e))
+        return False
+
+def notification_update(user, id):
+    notification = Notification.objects.filter(user=user, notification_id=id).first()
+    if notification:
+        notification.is_read = True
+        notification.save()
+    return True
