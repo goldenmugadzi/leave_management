@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GraphQL Error - 2026-01-12 12:32:43</title>
+    <title>GraphQL Error</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -48,14 +48,16 @@
             margin: 10px 0;
             border-radius: 4px;
         }
+        .error-message {
+            font-weight: 600;
+            color: #856404;
+        }
         pre {
             background: #f8f9fa;
             padding: 15px;
             border-radius: 4px;
             overflow-x: auto;
             border: 1px solid #dee2e6;
-            white-space: pre-wrap;
-            word-wrap: break-word;
         }
         .code {
             font-family: 'Courier New', monospace;
@@ -63,24 +65,41 @@
             line-height: 1.5;
         }
         .timestamp {
-            color: rgba(255,255,255,0.8);
-            font-size: 14px;
+            color: #6c757d;
+            font-size: 12px;
+        }
+        .variable-item {
+            background: #e9ecef;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-family: monospace;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>⚠️ GraphQL Error</h1>
-            <div class="timestamp">2026-01-12 12:32:43.447746</div>
-            <div class="timestamp">Status Code: 400</div>
+            <h1>⚠️ GraphQL Execution Error</h1>
+            <div class="timestamp">2026-01-12 12:32:43.329558</div>
         </div>
         <div class="content">
             
+            <div class="section">
+                <div class="section-title">Errors</div>
+                
+                <div class="error-box">
+                    <div class="error-message">Cannot query field &quot;hybridLogin&quot; on type &quot;Mutation&quot;.</div>
+                    
+                </div>
+                
+            </div>
             
-            <div class="section"><div class="section-title">Response Content</div><pre class="code">{"errors":[{"message":"Cannot query field \"hybridLogin\" on type \"Mutation\".","locations":[{"line":2,"column":3}]}]}</pre></div>
             
-            <div class="section"><div class="section-title">Query</div><pre class="code">mutation HybridLogin($username: String!, $password: String!) {
+            
+            <div class="section">
+                <div class="section-title">Query</div>
+                <pre class="code">mutation HybridLogin($username: String!, $password: String!) {
   hybridLogin(username: $username, password: $password) {
     success
     token
@@ -93,14 +112,31 @@
     }
     __typename
   }
-}</pre></div>
+}</pre>
+            </div>
             
-            <div class="section"><div class="section-title">Variables</div><pre class="code">{
-  "username": "persey",
-  "password": "0987654321`"
-}</pre></div>
             
-            <div class="section"><div class="section-title">Operation Name</div><div>HybridLogin</div></div>
+            
+            <div class="section">
+                <div class="section-title">Variables</div>
+                
+                <div class="variable-item">
+                    <strong>username:</strong> persey
+                </div>
+                
+                <div class="variable-item">
+                    <strong>password:</strong> 0987654321`
+                </div>
+                
+            </div>
+            
+            
+            
+            <div class="section">
+                <div class="section-title">Operation</div>
+                <div>HybridLogin</div>
+            </div>
+            
             
             
         </div>

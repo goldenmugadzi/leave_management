@@ -182,14 +182,34 @@ class CustomGraphQLView(FileUploadGraphQLView):
                 # Log details
                 for error in result.errors:
                     logger.error(f"Error details: {error}")
-                    if hasattr(error, 'original_error'):
-                        logger.error(f"Original error: {error.original_error}")
-                        logger.error(traceback.format_exception(
-                            type(error.original_error),
-                            error.original_error,
-                            error.original_error.__traceback__
-                        ))
+                    orig = getattr(error, 'original_error', None)
+                    if orig is not None:
+                        logger.error(f"Original error: {orig}")
+                        # orig.__traceback__ may be None in some contexts; guard access
+                        tb = getattr(orig, '__traceback__', None)
+                        logger.error(''.join(traceback.format_exception(type(orig), orig, tb)))
+                    else:
+                        # No original_error available; log the GraphQL error stack if present
+                        try:
+                            logger.error(traceback.format_exception_only(type(error), error))
+                        except Exception:
+                            logger.debug('No traceback available for GraphQL error')
             
+            # If a hybridLogin mutation returned tokens, stash them on the request
+            # so `dispatch` can set HttpOnly cookies on the outgoing HttpResponse.
+            try:
+                if result and hasattr(result, 'data') and isinstance(result.data, dict):
+                    hl = result.data.get('hybridLogin') or result.data.get('hybrid_login')
+                    if hl and isinstance(hl, dict):
+                        token = hl.get('token') or hl.get('token')
+                        refresh = hl.get('refreshToken') or hl.get('refresh_token') or hl.get('refreshToken')
+                        if token:
+                            # attach minimal token info to request for later use
+                            setattr(request, '_graphql_jwt', {'token': token, 'refresh': refresh})
+            except Exception:
+                # Swallow any unexpected errors when inspecting result data
+                logger.debug('Could not extract tokens from GraphQL result for cookie setting')
+
             # Always return the GraphQL result object, never HttpResponse
             return result
             
@@ -282,4 +302,36 @@ class CustomGraphQLView(FileUploadGraphQLView):
             
         except Exception as e:
             print(f"Could not save error HTML: {e}")
+
+    def dispatch(self, request, *args, **kwargs):
+        """Override dispatch to set HttpOnly cookies on the final HttpResponse
+        when execute_graphql_request stored JWT tokens on the request object.
+        """
+        response = super().dispatch(request, *args, **kwargs)
+
+        token_info = getattr(request, '_graphql_jwt', None)
+        if token_info and isinstance(response, HttpResponse):
+            try:
+                from django.conf import settings
+
+                cookie_opts = {
+                    'httponly': True,
+                    'secure': getattr(settings, 'SESSION_COOKIE_SECURE', False),
+                    'samesite': getattr(settings, 'SESSION_COOKIE_SAMESITE', 'Lax'),
+                    'path': '/',
+                }
+
+                access = token_info.get('token')
+                refresh = token_info.get('refresh')
+
+                if access:
+                    # Set a short-lived access cookie
+                    response.set_cookie('access_token', access, **cookie_opts)
+                if refresh:
+                    # Set refresh token cookie if provided
+                    response.set_cookie('refresh_token', refresh, **cookie_opts)
+            except Exception as e:
+                logger.error(f"Failed to set auth cookies on response: {e}")
+
+        return response
 

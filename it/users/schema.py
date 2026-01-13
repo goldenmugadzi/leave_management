@@ -370,26 +370,48 @@ class HybridLogout(graphene.Mutation):
         user = info.context.user
         
         if user and user.is_authenticated:
+            # Capture user id before calling logout (request.user will be anonymous afterwards)
+            user_id = str(user.id)
             username = user.username
             logger.info(f"User: {username}")
-            
+
             try:
-                # 1. Destroy Django session
+                # 1. Destroy Django session associated with the current request
                 logout(info.context)
                 logger.info(f"✓ Django session destroyed for: {username}")
-                
-                # 2. Note: JWT tokens are stateless, so we can't "destroy" them server-side
+
+                # 2. Destroy ALL other Django sessions for this user (logout across devices)
+                try:
+                    from django.contrib.sessions.models import Session
+                    from django.utils import timezone
+
+                    user_sessions = Session.objects.filter(expire_date__gte=timezone.now())
+                    deleted = 0
+                    for session in user_sessions:
+                        try:
+                            data = session.get_decoded()
+                            if data.get('_auth_user_id') == user_id:
+                                session.delete()
+                                deleted += 1
+                        except Exception:
+                            continue
+
+                    logger.info(f"✓ Deleted {deleted} session(s) for user {username}")
+                except Exception as e:
+                    logger.warning(f"Could not delete other sessions for user {username}: {e}")
+
+                # 3. Note: JWT tokens are stateless, so we can't "destroy" them server-side
                 # The frontend must remove the token from localStorage
                 # Optional: Implement token blacklist for true server-side revocation
-                
+
                 logger.info(f"✓ Hybrid logout successful for: {username}")
                 logger.info("=" * 60)
-                
+
                 return HybridLogoutType(
                     success=True,
                     message="Logout successful. Please remove JWT token from client."
                 )
-                
+
             except Exception as e:
                 logger.error(f"✗ Error during hybrid logout: {e}")
                 import traceback

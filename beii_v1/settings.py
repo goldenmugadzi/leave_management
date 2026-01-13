@@ -25,7 +25,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOWED_ORIGINS = [
     config('BASE_URL') + ":" + config('PORT'),
-    config('BASE_URL') + ":3000",
+    config('BASE_URL') + ":" + config('PORT1'),
     "https://ca173bdd6d5b.ngrok-free.app",
 ]
 CORS_ALLOW_CREDENTIALS = True
@@ -34,7 +34,7 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     config('BASE_URL'),
     config('BASE_URL') + ":" + config('PORT'),
-    config('BASE_URL') + ":3000",
+    config('BASE_URL') + ":" + config('PORT1'),
     "https://ca173bdd6d5b.ngrok-free.app",
 ]
 
