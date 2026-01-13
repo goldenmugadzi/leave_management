@@ -1,1 +1,3 @@
-   python manage.py startapp safety
+from django.test import TestCase
+
+# Create your tests here.
