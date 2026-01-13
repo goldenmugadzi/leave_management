@@ -354,10 +354,10 @@ def update_venue_booking(request, pk):
         if form.is_valid():
             updated_booking = form.save()
 
-            # -------- Notify booking creator --------
+            
             creator = updated_booking.created_by
 
-            # 🔹 Status → message mapping (PUT IT HERE)
+
             status_messages = {
                 "Cancelled": "has been cancelled",
                 "Postponed": "has been postponed",
@@ -365,7 +365,7 @@ def update_venue_booking(request, pk):
                 "Transferred to Another Venue": "has been transferred to another venue",
             }
 
-            # 🔹 Only notify if status actually changed
+            
             if creator and old_status != updated_booking.status:
                 action = status_messages.get(
                     updated_booking.status,
@@ -386,7 +386,7 @@ def update_venue_booking(request, pk):
                     id=updated_booking.id,
                     request=request
                 )
-            # ----------------------------------------
+            
 
             messages.success(request, "Venue booking updated successfully.")
             return redirect("booked_venue")

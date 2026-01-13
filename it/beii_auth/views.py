@@ -107,18 +107,80 @@ APPLICATIONS = [
         "iconUrl": "assets/images/register.png",
         "url": "/tab/"
     },
-      {
-        "name": "leave_management",
-        "title": "Leave Management System",
-        "iconUrl": "assets/images/leave.png",
-        "url": "/leave_dashboard/"
+    #   {
+    #     "name": "leave_management",
+    #     "title": "Leave Management System",
+    #     "iconUrl": "assets/images/leave.png",
+    #     "url": "/leave_dashboard/"
+    #     "name": "safety",
+    #     "title": "Safety.Health.Wellbeing",
+    #     "iconUrl": "assets/images/health.png",
+    #     "url": "/safety_table/"
+    # },
+    {
+        "name": "comm_files",
+        "title": "Commercial Files",
+        "iconUrl": "assets/images/customer.png",
+        "url": "/commercial/customers"
+    },  {
+        "name": "Battery Maintenance",
+        "title": "Battery Maintenance",
+        "iconUrl": "assets/images/customer.png",
+        "url": "/installations/"
     },
-      {
+    {
+        "name": "inspections",
+        "title": "Inspections",
+        "iconUrl": "assets/images/customer.png",
+        "url": "/inspections/"
+    },
+    {
         "name": "Meetings",
         "title": "Meetings",
         "iconUrl": "assets/images/meeting.png",
         "url": "/meetings_dashboard/"
-    }, 
+    },
+    {
+        "name":"fault_locator",
+        "title": "Fault Locator",
+        "iconUrl": "assets/images/fault_locator.png",
+        "url": "/fault_locator/"
+    },
+    # {
+    #     "name": "Battery Maintenance",
+    #     "title": "Battery Maintenance",
+    #     "iconUrl": "assets/images/customer.png",
+    #     "url": "/installations/"
+    # },  {
+    #     "name": "Tools & Equipment",
+    #     "title": "Tools & Equipment",
+    #     "iconUrl": "assets/images/tools&equipment.png",
+    #     "url": "/tools-and-equipment-list/"
+    # },
+    # {
+    #     "name": "inspections",
+    #     "title": "Inspections",
+    #     "iconUrl": "assets/images/customer.png",
+    #     "url": "/inspections/"
+    # },
+    # {
+    #     "name": "substation_inspections",
+    #     "title": "Substation Inspections",
+    #     "iconUrl": "assets/images/customer.png",
+    #     "url": "/substation-inspections/"
+    # },
+    # {
+    #     "name": "circuit_breaker_maintenance",
+    #     "title": "Circuit Breaker Maintenance",
+    #     "iconUrl": "assets/images/circuit_breaker.png",
+    #     "url": "/circuit-breakers/circuit-breakers/"
+    # },
+    #{
+    #    "name": "Meetings",
+    #    "title": "Meetings",
+    #    "iconUrl": "assets/images/meeting.png",
+    #    "url": "/meetings_dashboard/"
+    #}, 
       
       
 ]
