@@ -346,6 +346,9 @@ from django.utils.timezone import now
 def update_venue_booking(request, pk):
     booking = get_object_or_404(VenueBooking, pk=pk)
 
+    # 🔹 Store old status BEFORE saving
+    old_status = booking.status
+
     if request.method == "POST":
         form = VenueBookingForm(request.POST, instance=booking)
         if form.is_valid():
@@ -354,10 +357,23 @@ def update_venue_booking(request, pk):
             # -------- Notify booking creator --------
             creator = updated_booking.created_by
 
-            if creator:
+            # 🔹 Status → message mapping (PUT IT HERE)
+            status_messages = {
+                "Cancelled": "has been cancelled",
+                "Postponed": "has been postponed",
+                "Confirmed": "has been confirmed",
+                "Transferred to Another Venue": "has been transferred to another venue",
+            }
+
+            # 🔹 Only notify if status actually changed
+            if creator and old_status != updated_booking.status:
+                action = status_messages.get(
+                    updated_booking.status,
+                    "has been updated"
+                )
+
                 msg = (
-                    f"Your venue booking for {updated_booking.venue} "
-                    f"has been updated.\n"
+                    f"Your venue booking for {updated_booking.venue} {action}.\n"
                     f"Booking period: {updated_booking.start_date} "
                     f"to {updated_booking.end_date}"
                 )
