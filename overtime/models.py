@@ -10,6 +10,7 @@ class OvertimeEntry(models.Model):
     period_to = models.DateField()
     district_station = models.CharField(max_length=255, verbose_name="District/Station")
     designation = models.ForeignKey(Designations, null=True, blank=True,  on_delete=models.SET_NULL)
+    name_of_employee = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True, related_name="overtime")
     ec_number = models.CharField(max_length=100, blank=True)
     created_at = models.DateTimeField()
     created_by = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL)
