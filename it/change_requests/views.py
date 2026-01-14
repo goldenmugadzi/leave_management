@@ -641,9 +641,21 @@ def create_new_profile(request):
                 messages.error(request, "Invalid Training Date. Please use YYYY-MM-DD format.")
                 return redirect("/change_requests/create_change_request")
 
-        # Check if username already exists
-        if UserProfile.objects.filter(username=profile_username).exists():
-            messages.error(request, f"Username '{profile_username}' already exists. Please choose a different username.")
+        # Check if username already exists for this application
+        # Allow same username for different applications, but prevent duplicates for same application
+        if not application:
+            messages.error(request, "Application is required for creating a new profile.")
+            return redirect("/change_requests/create_change_request")
+        
+        existing_cr = ChangeRequest.objects.filter(
+            change_type="New Profile",
+            new_profile__username=profile_username,
+            application=application,
+            is_deleted=False
+        ).exclude(status='REJECTED').exists()
+        
+        if existing_cr:
+            messages.error(request, f"A profile request for username '{profile_username}' already exists for application '{application}'. Please check existing change requests or choose a different application.")
             return redirect("/change_requests/create_change_request")
 
         region = Regions.objects.filter(id=request.user.region.id).first() if request.user else None
@@ -2708,10 +2720,24 @@ def create_change_request_handler_unified(request):
                     messages.error(request, error)
                 return redirect("/change_requests/create_change_request")
             
-            # Check if username already exists
+            # Check if username already exists for this application
+            # Allow same username for different applications, but prevent duplicates for same application
             username = request.POST.get('username')
-            if UserProfile.objects.filter(username=username).exists():
-                messages.error(request, f"Username '{username}' already exists. Please choose a different username.")
+            application = request.POST.get('for_application')
+            
+            if not application:
+                messages.error(request, "Application is required for creating a new profile.")
+                return redirect("/change_requests/create_change_request")
+            
+            existing_cr = ChangeRequest.objects.filter(
+                change_type="New Profile",
+                new_profile__username=username,
+                application=application,
+                is_deleted=False
+            ).exclude(status='REJECTED').exists()
+            
+            if existing_cr:
+                messages.error(request, f"A profile request for username '{username}' already exists for application '{application}'. Please check existing change requests or choose a different application.")
                 return redirect("/change_requests/create_change_request")
             
             cr = ChangeRequestService.create_new_profile_cr(request.POST.dict(), request.user)
