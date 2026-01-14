@@ -76,41 +76,53 @@
         </thead>
         <tbody>
             {% for pettycash in pettycashs %}
-            <tr class="h-1 {% if pettycash.process.approval_set.last.approved == 'Approved' %}approved-row{% elif pettycash.process.approval_set.last.approved == 'Rejected' %}rejected-row{% else %}pending-row{% endif %}">
+            <tr class="h-1 {% if pettycash.process and pettycash.process.approval_set.last and pettycash.process.approval_set.last.approved == 'Approved' %}approved-row{% elif pettycash.process and pettycash.process.approval_set.last and pettycash.process.approval_set.last.approved == 'Rejected' %}rejected-row{% else %}pending-row{% endif %}">
                 <td><a class="text-blue-500" href="/pettycash/pettycash_detail/{{pettycash.petty_id}}">{{ pettycash.petty_id|default_if_none:'' }}</a></td>
-                <td>{{ pettycash.details_of_expenditure }}</td>
-                <td>{{ pettycash.amount }}</td>
-                <td>{% if pettycash.requested_by == user %} You {% else %} {{pettycash.requested_by.get_full_name }} {% endif %}</td>
-                <td>{{ pettycash.date_created }}</td>
-                <td>{{ pettycash.section }}</td>
+                <td>{{ pettycash.details_of_expenditure|default_if_none:'' }}</td>
+                <td>{{ pettycash.amount|default_if_none:'' }}</td>
+                <td>{% if pettycash.requested_by == user %} You {% elif pettycash.requested_by %}{{pettycash.requested_by.get_full_name|default_if_none:'' }}{% else %}N/A{% endif %}</td>
+                <td>{{ pettycash.date_created|default_if_none:'' }}</td>
+                <td>{{ pettycash.section|default_if_none:'' }}</td>
                 <td>{{ pettycash.payment_mode|default_if_none:'' }}</td>
-                <td>{{ pettycash.process.approval_set.last|default_if_none:'' }}</td>
+                <td>{% if pettycash.process and pettycash.process.approval_set.last %}{{ pettycash.process.approval_set.last|default_if_none:'' }}{% else %}N/A{% endif %}</td>
                 <td class="border-l border-gray-200">
-                    {% for approval in pettycash.process.approval_set.all %}
-                      {% if approval.user == request.user %}
-                        <div class="mb-2 pb-2 {% if not forloop.last %}border-b border-gray-200{% endif %} p-2 rounded {% if approval.approved == 'Approved' %}bg-green-50{% elif approval.approved == 'Rejected' %}bg-red-50{% else %}bg-blue-50{% endif %}">
-                          <span class="{% if approval.approved == 'Approved' %}text-green-600{% elif approval.approved == 'Rejected' %}text-red-600{% else %}text-blue-600{% endif %} font-medium">
-                            {{ approval.approved }}
-                          </span>
-                          {% if approval.step %}
-                            <div class="mt-1 text-sm text-gray-600">
-                              as {{ approval.step|default:"Step"|stringformat:"s"|lower }}
-                              {% if approval.step.step %}
-                                <span class="bg-gray-200 text-gray-700 px-1 rounded-sm text-xs">#{{ approval.step.step }}</span>
-                              {% endif %}
-                            </div>
-                          {% endif %}
-                          {% if approval.approved_at %}
-                            <div class="text-xs text-gray-500 mt-1">{{ approval.approved_at|date:"M d, Y H:i" }}</div>
-                          {% endif %}
-                        </div>
-                      {% endif %}
-                    {% endfor %}
+                    {% if pettycash.process %}
+                      {% for approval in pettycash.process.approval_set.all %}
+                        {% if approval.user == request.user %}
+                          <div class="mb-2 pb-2 {% if not forloop.last %}border-b border-gray-200{% endif %} p-2 rounded {% if approval.approved == 'Approved' %}bg-green-50{% elif approval.approved == 'Rejected' %}bg-red-50{% else %}bg-blue-50{% endif %}">
+                            <span class="{% if approval.approved == 'Approved' %}text-green-600{% elif approval.approved == 'Rejected' %}text-red-600{% else %}text-blue-600{% endif %} font-medium">
+                              {{ approval.approved|default_if_none:'' }}
+                            </span>
+                            {% if approval.step %}
+                              <div class="mt-1 text-sm text-gray-600">
+                                as {{ approval.step|default:"Step"|stringformat:"s"|lower }}
+                                {% if approval.step.step %}
+                                  <span class="bg-gray-200 text-gray-700 px-1 rounded-sm text-xs">#{{ approval.step.step }}</span>
+                                {% endif %}
+                              </div>
+                            {% endif %}
+                            {% if approval.approved_at %}
+                              <div class="text-xs text-gray-500 mt-1">{{ approval.approved_at|date:"M d, Y H:i" }}</div>
+                            {% endif %}
+                          </div>
+                        {% endif %}
+                      {% endfor %}
+                    {% else %}
+                      <span class="text-gray-400">No process data</span>
+                    {% endif %}
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="9" class="text-center">No items actioned yet.</td>
+                <td class="text-center">No items actioned yet.</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
             </tr>
             {% endfor %}
         </tbody>
@@ -125,25 +137,70 @@
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script>
   $(document).ready(function () {
-    // Initialize the DataTable with options and Tailwind CSS classes
-    $("#actionedItems").DataTable({
-      // Set the number of rows to display per page
-      "pageLength": 10,
-      
-      // Enable sorting on the specified columns
-      "columnDefs": [
-        { "orderable": true, "targets": [0, 1, 2, 4] }
-      ],
-      
-      // Enable searching within the table
-      "searching": true,
-      
-      // Display the DataTable in a responsive manner
-      "responsive": true,
-      
-      // Sort by date created (descending) by default
-      "order": [[4, "desc"]]
+    // Initialize the DataTable with options
+    var table = $("#actionedItems");
+    
+    // Verify all rows have exactly 9 cells before initializing
+    var tbody = table.find('tbody');
+    var expectedColumns = 9;
+    var allRowsValid = true;
+    
+    tbody.find('tr').each(function() {
+      var cellCount = $(this).find('td').length;
+      if (cellCount !== expectedColumns) {
+        console.warn('Row has ' + cellCount + ' cells, expected ' + expectedColumns);
+        allRowsValid = false;
+        // Fix the row by adding missing cells
+        while ($(this).find('td').length < expectedColumns) {
+          $(this).append('<td></td>');
+        }
+      }
     });
+    
+    // Initialize DataTable with explicit column configuration
+    try {
+      table.DataTable({
+        // Set the number of rows to display per page
+        "pageLength": 10,
+        
+        // Explicitly define all 9 columns to prevent column count errors
+        "columns": [
+          null, // PettyCash ID (column 0)
+          null, // Details (column 1)
+          null, // Amount (column 2)
+          null, // Requested By (column 3)
+          null, // Created At (column 4)
+          null, // Section (column 5)
+          null, // Payment Mode (column 6)
+          null, // Status (column 7)
+          { "orderable": false, "searchable": false } // My Action (column 8)
+        ],
+        
+        // Enable sorting on specific columns
+        "columnDefs": [
+          { "orderable": true, "targets": [0, 1, 2, 4] },
+          { "orderable": false, "targets": [3, 5, 6, 7, 8] }
+        ],
+        
+        // Enable searching within the table
+        "searching": true,
+        
+        // Disable responsive mode to avoid column count issues
+        "responsive": false,
+        
+        // Disable auto width calculation
+        "autoWidth": false,
+        
+        // Sort by date created (descending) by default
+        "order": [[4, "desc"]],
+        
+        // Suppress warnings
+        "info": true,
+        "paging": true
+      });
+    } catch (e) {
+      console.error('DataTables initialization error:', e);
+    }
   });
 </script>
 {% endblock %}
