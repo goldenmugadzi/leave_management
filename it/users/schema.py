@@ -1,3 +1,4 @@
+from django.db.models import Q
 import graphene
 from .types import (
     UserProfileType, RegionsType, DistrictsType, SectionsType, DepotsType,
@@ -60,17 +61,35 @@ class Query(graphene.ObjectType):
 
     def resolve_all_users(self, info, search=None):
         """Alias for resolve_users with 'search' parameter for frontend compatibility"""
-        from django.db.models import Q
-        
+        from django.db.models import Value
+        from django.db.models.functions import Concat
+
         queryset = UserProfile.objects.all()
-        if search:
-            queryset = queryset.filter(
-                Q(username__icontains=search) |
-                Q(email__icontains=search) |
-                Q(first_name__icontains=search) |
-                Q(last_name__icontains=search) 
+        if not search:
+            return queryset
+
+        s = str(search).strip()
+        if not s:
+            return queryset
+
+        # annotate a full_name field so we can match 'John Doe' as a phrase
+        queryset = queryset.annotate(full_name=Concat('first_name', Value(' '), 'last_name'))
+
+        terms = s.split()
+        q = Q()
+        for t in terms:
+            q |= (
+                Q(username__icontains=t) |
+                Q(email__icontains=t) |
+                Q(first_name__icontains=t) |
+                Q(last_name__icontains=t) |
+                Q(full_name__icontains=t)
             )
-        return queryset
+
+        # also allow the whole search phrase to match the full name
+        q |= Q(full_name__icontains=s)
+
+        return queryset.filter(q).distinct()
 
     def resolve_user(self, info, id):
         return UserProfile.objects.get(pk=id)
