@@ -201,6 +201,12 @@ APPLICATIONS = [
         "title": "Meetings",
         "iconUrl": "assets/images/meeting.png",
         "url": "/meetings_dashboard/"
+    },
+      {
+        "name": "Electro Seal ",
+        "title": "ElectroSeal",
+        "iconUrl": "assets/images/eseal.png",
+        "url": "/eseal/"
     }, 
       
     # {
@@ -254,12 +260,12 @@ REPORTS = [
         "iconUrl": "assets/images/change.png",
         "url": "/change_requests/change_request_reports"
     },
-    #   {
-    #     "name": "asset reports",
-    #     "title": "Asset Reports",
-    #     "iconUrl": "assets/images/reports.png",
-    #     "url": "/asset_report/"
-    # }, 
+      {
+        "name": "Electro Seal ",
+        "title": "ElectroSeal",
+        "iconUrl": "assets/images/eseal.png",
+        "url": "/eseal/"
+    }, 
       {
         "name": "Token",
         "title": "Tokens",
