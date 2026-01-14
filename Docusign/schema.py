@@ -426,7 +426,8 @@ class CreateSigningRequest(graphene.Mutation):
             except Exception:
                 domain_name = ''
 
-            redirect_url = f"{domain_name}/docusign/requests/{signing_request.id}"
+            redirect_url = f"{domain_name}/eseal/view-request/{signing_request.id}"
+
             message = f"You have been requested to sign the document: {document.title}"
 
             hour = datetime.now().hour
