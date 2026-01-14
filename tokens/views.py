@@ -91,7 +91,7 @@ def create_token(request):
                 tamper_token = tamper_token_form.save(commit=False)
                 tamper_token.token = token
                 tamper_token.save()
-                app = "temper"
+                app = "tamper"
                 if (
                     tamper_token.is_for == "Fault Maintenance"
                     and fault_maintanance_form.is_valid()
