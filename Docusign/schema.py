@@ -480,7 +480,10 @@ class CreateSigningRequest(graphene.Mutation):
                             # swallow email-sending errors - notification record still created
                             pass
             
-            
+                except Exception:
+                        # Handle any errors during notification creation per signer
+                        pass
+
             return CreateSigningRequest(
                 success=True,
                 message="Signing request created successfully",
