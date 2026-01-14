@@ -40,7 +40,17 @@
     <script>
         function goBack() {
           const loginUrl = '/accounts/login';
-          if (document.referrer && !document.referrer.includes(loginUrl)) {
+          const currentPath = window.location.pathname;
+          
+          // Check if we're anywhere in the pettycash application
+          if (currentPath.includes('/pettycash/')) {
+            window.location.href = "{% url 'pettycash:pettycashs_awaiting_my_action' %}";
+          } 
+          // Check if we're anywhere in the ACE application
+          else if (currentPath.includes('/ace/')) {
+            window.location.href = "{% url 'Ace:ace_awaiting_my_action' %}";
+          } 
+          else if (document.referrer && !document.referrer.includes(loginUrl)) {
             window.history.back();
           } else {
             window.location.href = "{% url 'dashboards:dashboard_overview' %}";
