@@ -13,6 +13,12 @@ from io import BytesIO
 from .models import Document, Signature, Request, PossibleSigner, Sign, Initial, AuditLog
 from .crypto import crypto_service
 import logging
+from it.users.models import Notification
+from it.users.views import ms_exhange_send_html
+from decouple import config
+from datetime import datetime
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 
 try:
     from graphql_jwt.shortcuts import get_token
@@ -398,6 +404,11 @@ class CreateSigningRequest(graphene.Mutation):
                     signer=signer_user,
                     role=(role_val or 'signer')
                 )
+                # collect signer users for notification
+                try:
+                    signer_users.append(signer_user)
+                except NameError:
+                    signer_users = [signer_user]
             
             # Create audit log
             AuditLog.objects.create(
@@ -409,6 +420,66 @@ class CreateSigningRequest(graphene.Mutation):
                     'signers_count': len(signers)
                 }
             )
+            # Notify signers (create Notification objects and send email)
+            try:
+                domain_name = config('be_url')
+            except Exception:
+                domain_name = ''
+
+            redirect_url = f"{domain_name}/docusign/requests/{signing_request.id}"
+            message = f"You have been requested to sign the document: {document.title}"
+
+            hour = datetime.now().hour
+            greetings = {
+                (0, 4): "Good night!",
+                (5, 11): "Good morning!",
+                (12, 16): "Good afternoon!",
+                (17, 20): "Good evening!",
+                (21, 23): "Good night!"
+            }
+            subject = next((msg for (start, end), msg in greetings.items() if start <= hour <= end), "Hello!")
+
+            cc_recipients = []
+            # ensure signer_users exists
+            signer_users = locals().get('signer_users', [])
+            for signer_user in signer_users:
+                try:
+                    # validate email
+                    if signer_user.email:
+                        try:
+                            validate_email(signer_user.email)
+                        except ValidationError:
+                            continue
+
+                        # create Notification record
+                        Notification.objects.create(
+                            user=signer_user,
+                            message=message,
+                            url=redirect_url,
+                            notification_type='signing_request',
+                            notification_id=str(signing_request.id)
+                        )
+
+                        # send email (best-effort)
+                        try:
+                            ms_exhange_send_html(
+                                subject=subject,
+                                to_recipients=[signer_user.email],
+                                cc_recipients=cc_recipients,
+                                template='email/email_template.html',
+                                kwargs={
+                                    "kwargs": {
+                                        "redirect_url": redirect_url,
+                                        "type": "Signing Request",
+                                        "user_fullname": signer_user.get_full_name(),
+                                        "message": message
+                                    }
+                                }
+                            )
+                        except Exception:
+                            # swallow email-sending errors - notification record still created
+                            pass
+            
             
             return CreateSigningRequest(
                 success=True,
@@ -804,6 +875,23 @@ class SignDocument(graphene.Mutation):
                 signer=user,
                 signature=signature_template
             )
+
+            # After creating a sign record, if the request is fully signed mark all notifications for this request as read
+            try:
+                # Determine if all required signers have signed
+                total_possible = signing_request.poss_signers.count()
+                total_signed = signing_request.signs.count()
+                require_all = signing_request.require_all_signatures if hasattr(signing_request, 'require_all_signatures') else True
+
+                if require_all and total_possible > 0 and total_signed >= total_possible:
+                    # Mark notifications for this request as read for all users
+                    Notification.objects.filter(
+                        notification_type='signing_request',
+                        notification_id=str(signing_request.id)
+                    ).update(is_read=True)
+            except Exception:
+                # best-effort: don't break the signing flow if notification update fails
+                pass
             
             # Handle visual signature if provided (save as signature template)
             if visual_signature_base64 and not signature_template:
@@ -1065,7 +1153,24 @@ class DocumentQuery(graphene.ObjectType):
     
     def resolve_document(self, info, id):
         try:
-            return Document.objects.get(pk=id)
+            doc = Document.objects.get(pk=id)
+            # Mark notifications for this document's signing requests as read for the current user
+            user = info.context.user
+            try:
+                if user and user.is_authenticated:
+                    # Only mark notifications for requests on this document
+                    # where the current user is a possible signer
+                    reqs = Request.objects.filter(document=doc, poss_signers__signer=user).distinct()
+                    for r in reqs:
+                        Notification.objects.filter(
+                            user=user,
+                            notification_type='signing_request',
+                            notification_id=str(r.id)
+                        ).update(is_read=True)
+            except Exception:
+                # best-effort - don't break query
+                pass
+            return doc
         except Document.DoesNotExist:
             return None
     
@@ -1118,7 +1223,19 @@ class DocumentQuery(graphene.ObjectType):
     
     def resolve_signing_request(self, info, id):
         try:
-            return Request.objects.get(pk=id)
+            req = Request.objects.get(pk=id)
+            # Mark notification for this request as read for the current user
+            user = info.context.user
+            try:
+                if user and user.is_authenticated:
+                    Notification.objects.filter(
+                        user=user,
+                        notification_type='signing_request',
+                        notification_id=str(id)
+                    ).update(is_read=True)
+            except Exception:
+                pass
+            return req
         except Request.DoesNotExist:
             return None
     
