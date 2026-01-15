@@ -2,6 +2,7 @@
 
 {% block styles %}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <style>
     .main-heading {
         font-size: 2rem;
@@ -139,21 +140,101 @@
         transition: background 0.2s;
     }
     .btn-info {
-        background: #2563eb;
-        color: #fff;
-        border-radius: 9999px;
-        padding: 0.5rem 1rem;
-        font-weight: 500;
-        transition: background 0.2s;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        border: none;
-        box-shadow: 0 2px 8px rgba(30,41,59,0.08);
+      background: linear-gradient(90deg, #2563eb 80%, #3b82f6 100%);
+      color: #fff;
+      border-radius: 0.75rem;
+      padding: 0.5rem 1.5rem;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: background 0.2s, box-shadow 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: none;
+      box-shadow: 0 2px 8px rgba(30,41,59,0.08);
+      text-decoration: none;
     }
     .btn-info:hover {
-        background: #1d4ed8;
-        color: #fff;
+      background: #1d4ed8;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(30,41,59,0.16);
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: linear-gradient(90deg, #2563eb 80%, #3b82f6 100%);
+      color: #fff;
+      border-radius: 0.75rem;
+      padding: 0.5rem 1.5rem;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: background 0.2s, box-shadow 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: none;
+      box-shadow: 0 2px 8px rgba(30,41,59,0.08);
+      text-decoration: none;
+    }
+    .btn-primary:hover {
+      background: #1d4ed8;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(30,41,59,0.16);
+      text-decoration: none;
+    }
+    .btn-secondary {
+      background: linear-gradient(90deg, #6b7280 80%, #9ca3af 100%);
+      color: #fff;
+      border-radius: 0.75rem;
+      padding: 0.5rem 1.5rem;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: background 0.2s, box-shadow 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: none;
+      box-shadow: 0 2px 8px rgba(30,41,59,0.08);
+      text-decoration: none;
+    }
+    .btn-secondary:hover {
+      background: #4b5563;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(30,41,59,0.16);
+      text-decoration: none;
+    }
+    .action-btn .material-icons {
+      font-size: 1.3rem;
+      vertical-align: middle;
+    }
+    /* Modern Table Enhancements */
+    .modern-table {
+      border-radius: 1.5rem;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(30,41,59,0.10);
+    }
+    .modern-table thead th {
+      background: linear-gradient(90deg, #96aee2 80%, #8fb6f4 100%);
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border-bottom: 2px solid #3b82f6;
+      padding: 1.25rem 0.75rem;
+      letter-spacing: 0.5px;
+    }
+    .modern-table tbody td {
+      padding: 1rem 0.75rem;
+      font-size: 1rem;
+      color: #17191e;
+      border-bottom: 1px solid #e5e7eb;
+      vertical-align: middle;
+      background: #f9fafb;
+    }
+    .modern-table tbody tr:nth-child(even) td {
+      background: #f3f4f6;
+    }
+    .modern-table tbody tr:hover td {
+      background: #e0e7ff;
+      transition: background 0.2s;
     }
 
     /* New Styles for Card Layout */
@@ -210,12 +291,25 @@
       Overtime Records
     </div>
 
-    <!-- Table -->
-    <div class="overflow-x-auto">
-      <table id="overtimeTable" class="display min-w-full">
+    
+    <div class="mb-8 flex flex-wrap gap-4 justify-center items-center">
+      <a href="{% url 'overtime:create_entry' %}" class="btn btn-primary action-btn">
+        <span class="material-icons align-middle mr-1">add_circle</span> Create Overtime Entry
+      </a>
+      <a href="#" class="btn btn-info action-btn">
+        <span class="material-icons align-middle mr-1">pending_actions</span> Awaiting My Action
+      </a>
+      <a href="#" class="btn btn-secondary action-btn">
+        <span class="material-icons align-middle mr-1">table_view</span> View Overtime
+      </a>
+    </div>
+    
+    <div class="overflow-x-auto rounded-2xl shadow-lg bg-white p-4 mt-2">
+      <table id="overtimeTable" class="display min-w-full modern-table">
         <thead>
           <tr>
             <th>ID</th>
+            <th>Job Vote No.</th>
             <th>Month</th>
             <th>Employee</th>
             <th>EC Number</th>
@@ -229,7 +323,6 @@
             <th>Nature of Work</th>
             <th>Created By</th>
             <th>Created At</th>
-            <th>Job Vote No.</th>
             <th class="text-center">Action</th>
           </tr>
         </thead>
@@ -255,6 +348,7 @@ $(document).ready(function () {
     },
     columns: [
       { data: "id" },
+      { data: "job_vote_number" },
       { data: "month" },
       { data: "employee" },
       { data: "ec_number" },
@@ -268,7 +362,6 @@ $(document).ready(function () {
       { data: "nature_of_work" },
       { data: "created_by" },
       { data: "created_at" },
-      { data: "job_vote_number" },
       {
         data: "id",
         render: function (data) {

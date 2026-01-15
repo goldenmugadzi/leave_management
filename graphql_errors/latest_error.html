@@ -1,0 +1,109 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GraphQL Error - 2026-01-12 12:32:43</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: #dc3545;
+            color: white;
+            padding: 20px 30px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #dc3545;
+        }
+        .error-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            border: 1px solid #dee2e6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .code {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .timestamp {
+            color: rgba(255,255,255,0.8);
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚠️ GraphQL Error</h1>
+            <div class="timestamp">2026-01-12 12:32:43.447746</div>
+            <div class="timestamp">Status Code: 400</div>
+        </div>
+        <div class="content">
+            
+            
+            <div class="section"><div class="section-title">Response Content</div><pre class="code">{"errors":[{"message":"Cannot query field \"hybridLogin\" on type \"Mutation\".","locations":[{"line":2,"column":3}]}]}</pre></div>
+            
+            <div class="section"><div class="section-title">Query</div><pre class="code">mutation HybridLogin($username: String!, $password: String!) {
+  hybridLogin(username: $username, password: $password) {
+    success
+    token
+    refreshToken
+    user {
+      id
+      username
+      email
+      __typename
+    }
+    __typename
+  }
+}</pre></div>
+            
+            <div class="section"><div class="section-title">Variables</div><pre class="code">{
+  "username": "persey",
+  "password": "0987654321`"
+}</pre></div>
+            
+            <div class="section"><div class="section-title">Operation Name</div><div>HybridLogin</div></div>
+            
+            
+        </div>
+    </div>
+</body>
+</html>

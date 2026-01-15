@@ -1,3 +1,5 @@
+from django.views.decorators.http import require_GET
+from django.core.serializers.json import DjangoJSONEncoder
 from django.shortcuts import render, redirect
 from .forms import MeetingsForm,MeetingsUpdateForm, VenueBookingForm
 from django.contrib import messages
@@ -235,16 +237,21 @@ def venues_datatable(request):
         status__in=["Pending", "Approved"]
     )
 
-    venues = Venue.objects.annotate(
-        is_booked=Exists(booked)
-    ).filter(is_booked=False)
+    venues = Venue.objects.all()
 
-    data = [{
-        "id": v.id,
-        "name": str(v),
-        "capacity": v.capacity,
-        "status": "Available"
-    } for v in venues]
+    data = []
+    for v in venues:
+        is_booked = VenueBooking.objects.filter(
+            venue=v,
+            end_date__gte=today,
+            status__in=["Pending", "Approved"]
+        ).exists()
+        data.append({
+            "id": v.id,
+            "name": str(v),
+            "capacity": v.capacity,
+            "status": "Booked" if is_booked else "Available"
+        })
 
     return JsonResponse({"data": data})
 
@@ -346,7 +353,6 @@ from django.utils.timezone import now
 def update_venue_booking(request, pk):
     booking = get_object_or_404(VenueBooking, pk=pk)
 
-    # 🔹 Store old status BEFORE saving
     old_status = booking.status
 
     if request.method == "POST":
@@ -354,9 +360,7 @@ def update_venue_booking(request, pk):
         if form.is_valid():
             updated_booking = form.save()
 
-            
             creator = updated_booking.created_by
-
 
             status_messages = {
                 "Cancelled": "has been cancelled",
@@ -365,7 +369,39 @@ def update_venue_booking(request, pk):
                 "Transferred to Another Venue": "has been transferred to another venue",
             }
 
-            
+            # Handle transfer logic in view
+            if updated_booking.status == "Transferred to Another Venue":
+                new_venue_id = request.POST.get("new_venue_id")
+                if new_venue_id:
+                    from meetings.models import Venue
+                    try:
+                        new_venue = Venue.objects.get(pk=new_venue_id)
+                        # Check if the new venue is already booked for the same period
+                        overlap = VenueBooking.objects.filter(
+                            venue=new_venue,
+                            start_date__lte=updated_booking.end_date,
+                            end_date__gte=updated_booking.start_date,
+                            status__in=["Pending", "Approved"]
+                        ).exists()
+                        if not overlap:
+                            # Create a new booking for the new venue with same dates/user
+                            VenueBooking.objects.create(
+                                venue=new_venue,
+                                start_date=updated_booking.start_date,
+                                end_date=updated_booking.end_date,
+                                created_by=updated_booking.created_by,
+                                status="Pending"
+                            )
+                            # Optionally, cancel the old booking
+                            updated_booking.status = "Cancelled"
+                            updated_booking.save()
+                        else:
+                            messages.error(request, "The selected venue is already booked for the chosen period.")
+                            return render(request, 'Meetings/venue_booking_update.html', {"form": form, "booking": booking})
+                    except Venue.DoesNotExist:
+                        messages.error(request, "Selected venue does not exist.")
+                        return render(request, 'Meetings/venue_booking_update.html', {"form": form, "booking": booking})
+
             if creator and old_status != updated_booking.status:
                 action = status_messages.get(
                     updated_booking.status,
@@ -386,7 +422,6 @@ def update_venue_booking(request, pk):
                     id=updated_booking.id,
                     request=request
                 )
-            
 
             messages.success(request, "Venue booking updated successfully.")
             return redirect("booked_venue")
@@ -438,3 +473,27 @@ def notification_update(user, id):
         notification.is_read = True
         notification.save()
     return True
+
+
+# AJAX endpoint to return VenueBooking details for auto-population
+@require_GET
+def booking_details(request):
+    booking_id = request.GET.get('booking_id')
+    if not booking_id:
+        return JsonResponse({'error': 'No booking_id provided'}, status=400)
+    try:
+        booking = VenueBooking.objects.select_related('venue', 'department').get(pk=booking_id)
+        data = {
+            'venue': booking.venue.id if booking.venue else None,
+            'venue_name': str(booking.venue) if booking.venue else '',
+            'department': booking.department.id if booking.department else None,
+            'department_name': str(booking.department) if booking.department else '',
+            'start_date': booking.start_date.strftime('%Y-%m-%d') if booking.start_date else '',
+            'end_date': booking.end_date.strftime('%Y-%m-%d') if booking.end_date else '',
+            'start_time': booking.start_time.strftime('%H:%M') if booking.start_time else '',
+            'end_time': booking.end_time.strftime('%H:%M') if booking.end_time else '',
+            'type_of_meeting': booking.type_of_meeting,
+        }
+        return JsonResponse(data, encoder=DjangoJSONEncoder)
+    except VenueBooking.DoesNotExist:
+        return JsonResponse({'error': 'Booking not found'}, status=404)

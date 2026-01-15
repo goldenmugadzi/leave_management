@@ -5,26 +5,56 @@ from .forms import OvertimeEntryForm
 from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.utils.timezone import localtime
-
+from datetime import datetime, timedelta
 
 def create_overtime_entry(request):
-	period_fields = [
-		"month", "period_from", "period_to", "district_station", "designation", "ec_number"
-	]
-	if request.method == "POST":
-		form = OvertimeEntryForm(request.POST, user=request.user)
-		if form.is_valid():
-			entry = form.save(commit=False)
-			entry.created_by = request.user
-            #entry.created_at = date.now
-			entry.save()
-			return redirect("overtime:entry_success")
-	else:
-		form = OvertimeEntryForm(user=request.user)
-	return render(request, "overtime/overtime_entry_form.html", {
-		"form": form,
-		"period_fields": period_fields,
-	})
+    from datetime import datetime, timedelta
+    from django.utils.crypto import get_random_string
+    period_fields = [
+        "month", "period_from", "period_to",
+        "district_station", "designation", "ec_number"
+    ]
+
+    username = None
+    if request.user.is_authenticated:
+        username = request.user.username
+
+    if request.method == "POST":
+        form = OvertimeEntryForm(request.POST, user=request.user)
+        if form.is_valid():
+            entry = form.save(commit=False)
+
+            entry.created_by = request.user
+
+            #TAKE EC NUMBER FROM THE CURRENTLY LOGGED IN PERSON IN THE SYSTEM 
+            if username and not entry.ec_number:
+                entry.ec_number = username
+
+            # generation of JOB NUMBER
+            now = datetime.now()
+            random_part = get_random_string(3).upper()
+            entry.job_vote_number = f"OVT-{now.strftime('%Y%m%d-%H%M%S')}"
+
+            #time frame to calculate hours on the table 
+            time_in = entry.time_in
+            time_out = entry.time_out
+            dt_in = datetime.combine(entry.period_from, time_in)
+            dt_out = datetime.combine(entry.period_from, time_out)
+            if dt_out < dt_in:
+                dt_out += timedelta(days=1)
+            duration = dt_out - dt_in
+            entry.hours = round(duration.total_seconds() / 3600, 2)
+
+            entry.save()
+            return redirect("/table")
+    else:
+        form = OvertimeEntryForm(user=request.user)
+
+    return render(request, "overtime/overtime_entry_form.html", {
+        "form": form,
+        "period_fields": period_fields,
+    })
+
 
 def overtime_list (request):
     return render(request, 'overtime/overtime_table.html')
@@ -50,6 +80,7 @@ def overtime_datatable(request):
     for o in page:
         data.append({
             "id": o.id,
+            "job_vote_number": o.job_vote_number,
             "month": o.month,
             "employee": str(o.name_of_employee) if o.name_of_employee else "-",
             "ec_number": o.ec_number,
@@ -63,7 +94,7 @@ def overtime_datatable(request):
             "nature_of_work": o.nature_of_work,
             "created_by": str(o.created_by) if o.created_by else "-",
             "created_at": localtime(o.created_at).strftime("%Y-%m-%d %H:%M"),
-            "job_vote_number": o.job_vote_number,
+            
         })
 
     return JsonResponse({
