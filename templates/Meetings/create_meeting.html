@@ -30,7 +30,21 @@
           </svg>
           Meeting Details
         </h2>
-        
+
+        <!-- Booking Selection -->
+        <div class="mb-6">
+          <label for="id_booking" class="block text-sm font-medium text-gulf-blue-900 mb-2">
+            Select Your Booking
+          </label>
+          {{ form.booking }}
+          {% if form.booking.help_text %}
+            <p class="mt-1 text-xs text-blue-600">{{ form.booking.help_text }}</p>
+          {% endif %}
+          {% if form.booking.errors %}
+            <p class="mt-1 text-xs text-red-500">{{ form.booking.errors }}</p>
+          {% endif %}
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           {% for field in form %}
             {% if field.name == "title" or field.name == "description" or field.name == "meeting_type" or field.name == "agenda" %}
@@ -177,7 +191,7 @@
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           {% for field in form %}
-            {% if field.name != "title" and field.name != "description" and field.name != "start_date" and field.name != "end_date" and field.name != "start_time" and field.name != "end_time" and field.name != "duration" and field.name != "timezone" and field.name != "location" and field.name != "room" and field.name != "is_virtual" and field.name != "meeting_link" and field.name != "employees_invited" and field.name != "host" and field.name != "department" and field.name != "expected_attendees" and field.name != "regions" and field.name != "cost_center" and field.name != "depot" and field.name != "venue" and not field.is_hidden %}
+            {% if field.name != "title" and field.name != "description" and field.name != "start_date" and field.name != "end_date" and field.name != "start_time" and field.name != "end_time" and field.name != "duration" and field.name != "timezone" and field.name != "location" and field.name != "room" and field.name != "is_virtual" and field.name != "meeting_link" and field.name != "employees_invited" and field.name != "host" and field.name != "department" and field.name != "expected_attendees" and field.name != "regions" and field.name != "cost_center" and field.name != "depot" and field.name != "venue" and field.name != "booking" and not field.is_hidden %}
               <div class="mb-4">
                 <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gulf-blue-900 mb-2">
                   {{ field.label }}{% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
@@ -225,6 +239,21 @@ $(document).ready(function() {
   // Fix Select2 z-index issue with fixed elements
   $(document).on('select2:open', () => {
     document.querySelector('.select2-container--open .select2-search__field').focus();
+  });
+  
+  $('#id_booking').on('change', function() {
+    var bookingId = $(this).val();
+    if (bookingId) {
+      $.get("{% url 'booking_details' %}", {booking_id: bookingId}, function(data) {
+        if (data.venue) $('#id_venue').val(data.venue).trigger('change');
+        if (data.department) $('#id_department').val(data.department).trigger('change');
+        if (data.start_date) $('#id_start_date').val(data.start_date);
+        if (data.end_date) $('#id_end_date').val(data.end_date);
+        if (data.start_time) $('#id_start_time').val(data.start_time);
+        if (data.end_time) $('#id_end_time').val(data.end_time);
+        if (data.type_of_meeting) $('#id_type_of_meeting').val(data.type_of_meeting).trigger('change');
+      });
+    }
   });
 });
 </script>
