@@ -208,6 +208,12 @@ APPLICATIONS = [
         "iconUrl": "assets/images/eseal.png",
         "url": "/eseal/"
     }, 
+    #{
+    #    "name": "Meetings",
+    #    "title": "Meetings",
+    #    "iconUrl": "assets/images/meeting.png",
+    #    "url": "/meetings_dashboard/"
+    #}, 
       
     # {
     #     "name":"fault_locator",

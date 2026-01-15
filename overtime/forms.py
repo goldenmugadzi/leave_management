@@ -4,21 +4,8 @@ from .models import OvertimeEntry
 class OvertimeEntryForm(forms.ModelForm):
     class Meta:
         model = OvertimeEntry
-        fields = [
-            "month",
-            "period_from",
-            "period_to",
-            "district_station",
-            "designation",
-            "ec_number",
-            "created_at",
-            "created_by",
-            "nature_of_work",
-            "time_out",
-            "time_in",
-            "hours",
-            "job_vote_number",
-        ]
+        fields = '__all__'
+        exclude = ['hours','created_at','ec_number','job_vote_number','created_by']
         widgets = {
             'period_from': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'period_to': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
@@ -49,7 +36,7 @@ class OvertimeEntryForm(forms.ModelForm):
             "focus:ring-indigo-600 sm:text-sm sm:leading-6"
         )
 
-        select2_fields = ['designation', 'created_by']
+        select2_fields = ['designation','name_of_employee']
 
         for field_name, field in self.fields.items():
             current_class = field.widget.attrs.get('class', '')
