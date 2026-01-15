@@ -14,4 +14,5 @@ urlpatterns = [
     path('booked_venue/', views.booked_venue, name='booked_venue'),
     path('booked_venues_datatable/', views.booked_venues_datatable, name='booked_venues_datatable'),
     path("venue-booking/<int:pk>/update/", views.update_venue_booking, name="update_venue_booking"),
+    path('ajax/booking-details/', views.booking_details, name='booking_details'),
 ]
