@@ -218,7 +218,7 @@ def create_venue_booking(request):
             booking.created_by = request.user
             booking.status = "Pending"
             booking.save()
-            messages.success(request, "Venue booked successfully.")
+            # Only one success message should be shown
             return redirect("meetings_dashboard")
 
         # Form invalid → re-render page with errors
@@ -234,7 +234,7 @@ def venues_datatable(request):
     booked = VenueBooking.objects.filter(
         venue=OuterRef('pk'),
         end_date__gte=today,
-        status__in=["Pending", "Approved"]
+        status__in=["Pending", "Confirmed"]
     )
 
     venues = Venue.objects.all()
@@ -244,7 +244,7 @@ def venues_datatable(request):
         is_booked = VenueBooking.objects.filter(
             venue=v,
             end_date__gte=today,
-            status__in=["Pending", "Approved"]
+            status__in=["Pending","Confirmed"]
         ).exists()
         data.append({
             "id": v.id,

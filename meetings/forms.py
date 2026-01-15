@@ -23,7 +23,7 @@ class MeetingsForm(forms.ModelForm):
                         "ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset " \
                         "focus:ring-indigo-600 sm:text-sm sm:leading-6"
             if field_name == 'booking' and hasattr(field, 'label_from_instance'):
-                field.label_from_instance = lambda obj: f"{obj.venue}" if obj.venue else str(obj)
+                field.label_from_instance = lambda obj: f"{obj.type_of_meeting}  {obj.start_date}" if obj.venue else str(obj)
                 # Ensure booking dropdown is styled and searchable like other select2 dropdowns
                 field.widget.attrs.update({'class': css_class + ' select2'})
             elif isinstance(field, forms.ModelChoiceField):
